@@ -1,4 +1,3 @@
-import 'package:flight_tracker/pages/info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -10,6 +9,7 @@ class DraggableScrollSheet extends StatefulWidget {
   final double borderRadius;
   final Duration animationDuration;
   final RouteTransitionsBuilder? pageTransition;
+  final Widget page;
 
   const DraggableScrollSheet({
     super.key,
@@ -20,6 +20,7 @@ class DraggableScrollSheet extends StatefulWidget {
     this.borderRadius = 16.0,
     this.animationDuration = const Duration(milliseconds: 300),
     this.pageTransition,
+    required this.page,
   });
 
   @override
@@ -40,7 +41,7 @@ class _DraggableScrollSheetState extends State<DraggableScrollSheet>
     timeDilation = 3.0;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (BuildContext context) => InfoPage()),
+      MaterialPageRoute(builder: (BuildContext context) => widget.page),
     );
   }
 

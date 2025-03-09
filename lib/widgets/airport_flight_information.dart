@@ -21,7 +21,7 @@ class AirportFlightInformation extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         Text(
-          airport.timeZone,
+          "CEST (UTC+2)",
           style: TextStyle(color: Colors.grey, fontSize: 12),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

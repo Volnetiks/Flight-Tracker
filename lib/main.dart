@@ -1,4 +1,5 @@
 import 'package:flight_tracker/pages/home.dart';
+import 'package:flight_tracker/pages/splash.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,7 +14,10 @@ class FlightTracker extends StatelessWidget {
     return MaterialApp(
       title: 'Flight Tracker',
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: SplashScreen(
+        assetPath: 'assets/airports_database.txt',
+        nextScreen: HomePage(),
+      ),
     );
   }
 }

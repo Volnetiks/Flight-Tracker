@@ -5,7 +5,14 @@ import 'package:flight_tracker/widgets/progress_line.dart';
 import 'package:flutter/material.dart';
 
 class FlightInfoHeader extends StatelessWidget {
-  const FlightInfoHeader({super.key});
+  const FlightInfoHeader({
+    super.key,
+    required this.departingAirport,
+    required this.arrivingAirport,
+  });
+
+  final Airport departingAirport;
+  final Airport arrivingAirport;
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +38,7 @@ class FlightInfoHeader extends StatelessWidget {
               children: [
                 FlightTrackerHero(
                   tag: 'departing-airport',
-                  child: AirportFlightInformation(
-                    airport: Airport(
-                      city: "Paris",
-                      iata: "CDG",
-                      icao: "LFPG",
-                      name: "Roissy-Charles-de-Gaulle",
-                      timeZone: "CET (UTC+1:00)",
-                    ),
-                  ),
+                  child: AirportFlightInformation(airport: departingAirport),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -104,15 +103,7 @@ class FlightInfoHeader extends StatelessWidget {
               children: [
                 FlightTrackerHero(
                   tag: 'arrival-airport',
-                  child: AirportFlightInformation(
-                    airport: Airport(
-                      name: "Newark Liberty International Airport",
-                      city: "New York City",
-                      icao: "KEWR",
-                      iata: "EWR",
-                      timeZone: 'EST (UTC-5:00)',
-                    ),
-                  ),
+                  child: AirportFlightInformation(airport: arrivingAirport),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),

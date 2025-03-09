@@ -5,7 +5,14 @@ import 'package:flight_tracker/widgets/progress_line.dart';
 import 'package:flutter/material.dart';
 
 class FlightState extends StatefulWidget {
-  const FlightState({super.key});
+  const FlightState({
+    super.key,
+    required this.departingAirport,
+    required this.arrivingAirport,
+  });
+
+  final Airport departingAirport;
+  final Airport arrivingAirport;
 
   @override
   State<FlightState> createState() => _FlightStateState();
@@ -21,15 +28,7 @@ class _FlightStateState extends State<FlightState> {
           flex: 3,
           child: FlightTrackerHero(
             tag: 'departing-airport',
-            child: AirportFlightInformation(
-              airport: Airport(
-                city: "Paris",
-                iata: "CDG",
-                icao: "LFPG",
-                name: "Roissy-Charles-de-Gaulle",
-                timeZone: "CET (UTC+1:00)",
-              ),
-            ),
+            child: AirportFlightInformation(airport: widget.departingAirport),
           ),
         ),
         Expanded(
@@ -76,15 +75,7 @@ class _FlightStateState extends State<FlightState> {
           flex: 3,
           child: FlightTrackerHero(
             tag: 'arrival-airport',
-            child: AirportFlightInformation(
-              airport: Airport(
-                name: "Newark Liberty International Airport",
-                city: "New York City",
-                icao: "KEWR",
-                iata: "EWR",
-                timeZone: 'EST (UTC-5:00)',
-              ),
-            ),
+            child: AirportFlightInformation(airport: widget.arrivingAirport),
           ),
         ),
       ],

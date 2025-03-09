@@ -1,11 +1,24 @@
+import 'package:flight_tracker/classes/airport.dart';
+import 'package:flight_tracker/pages/info.dart';
+import 'package:flight_tracker/services/airport_data_service.dart';
 import 'package:flight_tracker/widgets/expandable_snackbar.dart';
 import 'package:flight_tracker/widgets/flight_state.dart';
 import 'package:flight_tracker/widgets/image_hero.dart';
 import 'package:flight_tracker/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final AirportDataService _airportDataService = AirportDataService();
+
+  Airport? _departureAirport;
+  Airport? _arrivalAirport;
 
   @override
   Widget build(BuildContext context) {
@@ -15,38 +28,98 @@ class HomePage extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: Scaffold(
-                backgroundColor: Colors.transparent,
-                body: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 20),
-                      Row(
-                        spacing: 10,
-                        children: [
-                          FlightTrackerSearchBar(),
-                          CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 25,
-                            child: Icon(
-                              Icons.person_outline_rounded,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+              child: Column(
+                children: [
+                  SizedBox(height: 150),
+                  GestureDetector(
+                    onTap: () {
+                      _arrivalAirport = _airportDataService.getAirportByIcao(
+                        "KEWR",
+                      );
+                      _departureAirport = _airportDataService.getAirportByIcao(
+                        "LFPG",
+                      );
+                      setState(() {});
+                      print("test");
+                    },
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      color: Colors.amber,
+                      child: Text("CDG-EWR"),
+                    ),
                   ),
+                  GestureDetector(
+                    onTap: () {
+                      _arrivalAirport = _airportDataService.getAirportByIcao(
+                        "EPWA",
+                      );
+                      _departureAirport = _airportDataService.getAirportByIcao(
+                        "LFPG",
+                      );
+                      setState(() {});
+                    },
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      color: Colors.amber,
+                      child: Text("CDG-WAW"),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _arrivalAirport = _airportDataService.getAirportByIcao(
+                        "LFPG",
+                      );
+                      _departureAirport = _airportDataService.getAirportByIcao(
+                        "LFRS",
+                      );
+                      setState(() {});
+                    },
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      color: Colors.amber,
+                      child: Text("NTE-CDG"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 20,
+              left: 20,
+              right: 20,
+              child: Container(
+                height: 50,
+                child: Row(
+                  spacing: 10,
+                  children: [
+                    FlightTrackerSearchBar(),
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: 25,
+                      child: Icon(
+                        Icons.person_outline_rounded,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            DraggableScrollSheet(
-              previewContent: _buildPreviewContent(),
-              handleColor: Colors.grey.withAlpha(128),
-              minHeight: 250,
-              backgroundColor: Colors.white,
-            ),
+
+            if (_departureAirport != null && _arrivalAirport != null)
+              DraggableScrollSheet(
+                page: InfoPage(
+                  departingAirport: _departureAirport!,
+                  arrivingAirport: _arrivalAirport!,
+                ),
+                previewContent: _buildPreviewContent(),
+                handleColor: Colors.grey.withAlpha(128),
+                minHeight: 250,
+                backgroundColor: Colors.white,
+              ),
           ],
         ),
       ),
@@ -120,7 +193,10 @@ class HomePage extends StatelessWidget {
           SizedBox(height: 10),
           Divider(),
           SizedBox(height: 5),
-          FlightState(),
+          FlightState(
+            departingAirport: _departureAirport!,
+            arrivingAirport: _arrivalAirport!,
+          ),
         ],
       ),
     );

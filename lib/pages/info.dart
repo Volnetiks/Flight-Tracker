@@ -1,3 +1,4 @@
+import 'package:flight_tracker/classes/airport.dart';
 import 'package:flight_tracker/widgets/hero_widget.dart';
 import 'package:flight_tracker/widgets/infos/flight_info_header.dart';
 import 'package:flight_tracker/widgets/infos/flight_info_panel.dart';
@@ -5,7 +6,14 @@ import 'package:flight_tracker/widgets/infos/info_line.dart';
 import 'package:flutter/material.dart';
 
 class InfoPage extends StatefulWidget {
-  const InfoPage({super.key});
+  const InfoPage({
+    super.key,
+    required this.departingAirport,
+    required this.arrivingAirport,
+  });
+
+  final Airport departingAirport;
+  final Airport arrivingAirport;
 
   @override
   State<InfoPage> createState() => _InfoPageState();
@@ -226,7 +234,10 @@ class _InfoPageState extends State<InfoPage> {
                 ),
               ),
             ),
-            FlightInfoHeader(),
+            FlightInfoHeader(
+              departingAirport: widget.departingAirport,
+              arrivingAirport: widget.arrivingAirport,
+            ),
           ],
         ),
       ),
