@@ -1,6 +1,5 @@
 import 'package:flight_tracker/widgets/expandable_snackbar.dart';
 import 'package:flight_tracker/widgets/flight_state.dart';
-import 'package:flight_tracker/widgets/hero_widget.dart';
 import 'package:flight_tracker/widgets/image_hero.dart';
 import 'package:flight_tracker/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
@@ -99,7 +98,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              FlightTrackerHero(
+              FlightTrackerHeroImage(
                 tag: "image",
                 child: Align(
                   alignment: Alignment.center,

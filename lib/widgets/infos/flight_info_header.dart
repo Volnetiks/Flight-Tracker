@@ -10,7 +10,17 @@ class FlightInfoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       height: 150,
       child: Row(
         children: [
@@ -66,9 +76,12 @@ class FlightInfoHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  "456KTS - 34.433FT",
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                FlightTrackerHero(
+                  tag: 'flight-altitude-speed',
+                  child: Text(
+                    "456KTS - 34.433FT",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                 ),
                 FlightTrackerHero(
                   tag: 'in-flight-container',

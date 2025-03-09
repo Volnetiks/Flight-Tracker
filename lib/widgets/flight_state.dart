@@ -62,6 +62,13 @@ class _FlightStateState extends State<FlightState> {
                   ),
                 ),
               ),
+              FlightTrackerHero(
+                tag: 'flight-altitude-speed',
+                child: Text(
+                  "456KTS - 34.433FT",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
             ],
           ),
         ),

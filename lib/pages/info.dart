@@ -1,9 +1,7 @@
-import 'package:flight_tracker/widgets/image_hero.dart';
-import 'package:flight_tracker/widgets/infos/flight_info_header.dart';
 import 'package:flight_tracker/widgets/hero_widget.dart';
+import 'package:flight_tracker/widgets/infos/flight_info_header.dart';
 import 'package:flight_tracker/widgets/infos/flight_info_panel.dart';
 import 'package:flight_tracker/widgets/infos/info_line.dart';
-import 'package:flight_tracker/widgets/progress_line.dart';
 import 'package:flutter/material.dart';
 
 class InfoPage extends StatefulWidget {
@@ -40,24 +38,7 @@ class _InfoPageState extends State<InfoPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 150),
-                    FlightTrackerHeroImage(
-                      tag: 'image',
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: SizedBox(
-                          width: 150 * 3,
-                          height: 70 * 3,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: Image.network(
-                              "https://cdn.jetphotos.com/full/5/1432322_1739498699.jpg",
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 20),
                     FlightInfoPanel(
                       title: Row(
                         spacing: 5,
@@ -117,6 +98,130 @@ class _InfoPageState extends State<InfoPage> {
                       ],
                     ),
                     SizedBox(height: 10),
+                    FlightInfoPanel(
+                      title: Text(
+                        "Departure",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      infoLines: [
+                        InfoLine(
+                          leadIcon: Icon(Icons.calendar_today_outlined),
+                          endIcon: Icon(Icons.access_time_rounded),
+                          leadText: "Date of Departure",
+                          endText: "Departure Time",
+                          leadValue: "March 8, 2025",
+                          endValue: "1:15PM",
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.apartment_rounded),
+                          leadText: "Airport",
+                          endIcon: Icon(Icons.meeting_room_outlined),
+                          endText: "Terminal",
+                          endValue: "3 Ultimate",
+                          leadValue: "Roissy-Charles-De-Gaulle",
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.airplane_ticket_outlined),
+                          leadText: "Boarding",
+                          endIcon: Icon(Icons.domain_outlined),
+                          endText: "Gate",
+                          leadValue: "12:30PM",
+                          endValue: "13",
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    FlightInfoPanel(
+                      title: Text(
+                        "Arrival",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      infoLines: [
+                        InfoLine(
+                          leadIcon: Icon(Icons.calendar_today_outlined),
+                          endIcon: Icon(Icons.access_time_rounded),
+                          leadText: "Date of Arrival",
+                          endText: "Arrival Time",
+                          leadValue: "March 8, 2025",
+                          endValue: "1:15PM",
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.apartment_rounded),
+                          leadText: "Airport",
+                          endIcon: Icon(Icons.meeting_room_outlined),
+                          endText: "Terminal",
+                          endValue: "3 Ultimate",
+                          leadValue: "Newark Liberty International Airport",
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.luggage_outlined),
+                          leadText: "Luggage",
+                          endIcon: Icon(Icons.domain_outlined),
+                          endText: "Gate",
+                          leadValue: "12:30PM",
+                          endValue: "13",
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    FlightInfoPanel(
+                      leadingWidget: FlightTrackerHero(
+                        tag: 'image',
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: AspectRatio(
+                            aspectRatio: 150 / 70,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.network(
+                                "https://cdn.jetphotos.com/full/5/1432322_1739498699.jpg",
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        "Aircraft Information",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      infoLines: [
+                        InfoLine(
+                          leadIcon: Icon(Icons.pin_outlined),
+                          endIcon: Icon(Icons.flight_outlined),
+                          leadText: "Registration Number",
+                          endText: "Aircraft Type",
+                          leadValue: "F-HUVF",
+                          endValue: "A350-900",
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.cake_outlined),
+                          leadText: "Age",
+                          endIcon: Icon(Icons.campaign_outlined),
+                          endText: "ATC Callsign",
+                          endValuePremium: true,
+                          leadValuePremium: true,
+                        ),
+                        InfoLine(
+                          leadIcon: Icon(Icons.airlines_outlined),
+                          leadText: "Airline",
+                          endIcon: Icon(Icons.flag_outlined),
+                          endText: "Country",
+                          leadValue: "Air France",
+                          endValue: "France",
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 50),
                   ],
                 ),
               ),

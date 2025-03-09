@@ -7,10 +7,12 @@ class FlightInfoPanel extends StatelessWidget {
     super.key,
     required this.title,
     required this.infoLines,
+    this.leadingWidget,
   });
 
   final Widget title;
   final List<InfoLine> infoLines;
+  final Widget? leadingWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,8 @@ class FlightInfoPanel extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: Column(
               children: [
+                if (leadingWidget != null)
+                  Column(children: [leadingWidget!, SizedBox(height: 10)]),
                 ...infoLines
                     .expand(
                       (item) => [
