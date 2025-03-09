@@ -1,18 +1,13 @@
-import 'package:flight_tracker/classes/airport.dart';
+import 'package:flight_tracker/classes/flight.dart';
 import 'package:flight_tracker/widgets/airport_flight_information.dart';
 import 'package:flight_tracker/widgets/hero_widget.dart';
 import 'package:flight_tracker/widgets/progress_line.dart';
 import 'package:flutter/material.dart';
 
 class FlightInfoHeader extends StatelessWidget {
-  const FlightInfoHeader({
-    super.key,
-    required this.departingAirport,
-    required this.arrivingAirport,
-  });
+  const FlightInfoHeader({super.key, required this.flight});
 
-  final Airport departingAirport;
-  final Airport arrivingAirport;
+  final Flight flight;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +33,9 @@ class FlightInfoHeader extends StatelessWidget {
               children: [
                 FlightTrackerHero(
                   tag: 'departing-airport',
-                  child: AirportFlightInformation(airport: departingAirport),
+                  child: AirportFlightInformation(
+                    airport: flight.departure.airport,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -78,7 +75,7 @@ class FlightInfoHeader extends StatelessWidget {
                 FlightTrackerHero(
                   tag: 'flight-altitude-speed',
                   child: Text(
-                    "456KTS - 34.433FT",
+                    "${flight.position.gspeed}KTS - ${flight.position.alt}FT",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -90,7 +87,10 @@ class FlightInfoHeader extends StatelessWidget {
                       color: Colors.green.withAlpha(50),
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    child: Text("In Flight", style: TextStyle(fontSize: 12)),
+                    child: Text(
+                      flight.status == "Departed" ? "In Flight" : flight.status,
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ),
               ],
@@ -103,7 +103,9 @@ class FlightInfoHeader extends StatelessWidget {
               children: [
                 FlightTrackerHero(
                   tag: 'arrival-airport',
-                  child: AirportFlightInformation(airport: arrivingAirport),
+                  child: AirportFlightInformation(
+                    airport: flight.arrival.airport,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),

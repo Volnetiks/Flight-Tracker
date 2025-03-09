@@ -1,18 +1,13 @@
-import 'package:flight_tracker/classes/airport.dart';
+import 'package:flight_tracker/classes/flight.dart';
 import 'package:flight_tracker/widgets/airport_flight_information.dart';
 import 'package:flight_tracker/widgets/hero_widget.dart';
 import 'package:flight_tracker/widgets/progress_line.dart';
 import 'package:flutter/material.dart';
 
 class FlightState extends StatefulWidget {
-  const FlightState({
-    super.key,
-    required this.departingAirport,
-    required this.arrivingAirport,
-  });
+  const FlightState({super.key, required this.flight});
 
-  final Airport departingAirport;
-  final Airport arrivingAirport;
+  final Flight flight;
 
   @override
   State<FlightState> createState() => _FlightStateState();
@@ -28,7 +23,9 @@ class _FlightStateState extends State<FlightState> {
           flex: 3,
           child: FlightTrackerHero(
             tag: 'departing-airport',
-            child: AirportFlightInformation(airport: widget.departingAirport),
+            child: AirportFlightInformation(
+              airport: widget.flight.departure.airport,
+            ),
           ),
         ),
         Expanded(
@@ -43,7 +40,12 @@ class _FlightStateState extends State<FlightState> {
                     color: Colors.green.withAlpha(50),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Text("In Flight", style: TextStyle(fontSize: 12)),
+                  child: Text(
+                    widget.flight.status == "Departed"
+                        ? "In Flight"
+                        : widget.flight.status,
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
               FlightTrackerHero(
@@ -61,13 +63,14 @@ class _FlightStateState extends State<FlightState> {
                   ),
                 ),
               ),
-              FlightTrackerHero(
-                tag: 'flight-altitude-speed',
-                child: Text(
-                  "456KTS - 34.433FT",
-                  style: TextStyle(fontWeight: FontWeight.w500),
+              if (widget.flight.status == "Departed")
+                FlightTrackerHero(
+                  tag: 'flight-altitude-speed',
+                  child: Text(
+                    "${widget.flight.position.gspeed}KTS - ${widget.flight.position.alt}FT",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -75,7 +78,9 @@ class _FlightStateState extends State<FlightState> {
           flex: 3,
           child: FlightTrackerHero(
             tag: 'arrival-airport',
-            child: AirportFlightInformation(airport: widget.arrivingAirport),
+            child: AirportFlightInformation(
+              airport: widget.flight.arrival.airport,
+            ),
           ),
         ),
       ],

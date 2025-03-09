@@ -15,7 +15,7 @@ class AirportFlightInformation extends StatelessWidget {
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
         Text(
-          airport.city,
+          airport.municipalityName,
           style: TextStyle(fontSize: 14),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

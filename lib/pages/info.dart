@@ -1,4 +1,6 @@
-import 'package:flight_tracker/classes/airport.dart';
+import 'dart:math';
+
+import 'package:flight_tracker/classes/flight.dart';
 import 'package:flight_tracker/widgets/hero_widget.dart';
 import 'package:flight_tracker/widgets/infos/flight_info_header.dart';
 import 'package:flight_tracker/widgets/infos/flight_info_panel.dart';
@@ -6,14 +8,9 @@ import 'package:flight_tracker/widgets/infos/info_line.dart';
 import 'package:flutter/material.dart';
 
 class InfoPage extends StatefulWidget {
-  const InfoPage({
-    super.key,
-    required this.departingAirport,
-    required this.arrivingAirport,
-  });
+  const InfoPage({super.key, required this.flight});
 
-  final Airport departingAirport;
-  final Airport arrivingAirport;
+  final Flight flight;
 
   @override
   State<InfoPage> createState() => _InfoPageState();
@@ -84,16 +81,20 @@ class _InfoPageState extends State<InfoPage> {
                           endIcon: Icon(Icons.trending_up),
                           leadText: "Speed",
                           endText: "Altitude",
-                          leadValue: "456KTS",
-                          endValue: "34.433FT",
+                          leadValue: "${widget.flight.position.gspeed}KTS",
+                          endValue: "${widget.flight.position.alt}FT",
                         ),
                         InfoLine(
                           leadIcon: Icon(Icons.satellite_alt_outlined),
                           leadText: "Squawk",
-                          endIcon: Icon(Icons.west),
+                          endIcon: Transform.rotate(
+                            angle: 2 * pi / 360 * widget.flight.position.track,
+                            child: Icon(Icons.north),
+                          ),
                           endText: "Course",
                           leadValuePremium: true,
-                          endValue: "74°",
+                          endValue: "${widget.flight.position.track}°",
+                          leadValue: widget.flight.position.squawk,
                         ),
                         InfoLine(
                           leadIcon: Icon(Icons.arrow_circle_up),
@@ -102,6 +103,8 @@ class _InfoPageState extends State<InfoPage> {
                           endText: "Data Source",
                           leadValuePremium: true,
                           endValuePremium: true,
+                          leadValue: "${widget.flight.position.vspeed}FT/min",
+                          endValue: widget.flight.position.source,
                         ),
                       ],
                     ),
@@ -234,10 +237,7 @@ class _InfoPageState extends State<InfoPage> {
                 ),
               ),
             ),
-            FlightInfoHeader(
-              departingAirport: widget.departingAirport,
-              arrivingAirport: widget.arrivingAirport,
-            ),
+            FlightInfoHeader(flight: widget.flight),
           ],
         ),
       ),
