@@ -10,6 +10,10 @@ class FlightTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Flight Tracker', home: const HomePage());
+    return MaterialApp(
+      title: 'Flight Tracker',
+      debugShowCheckedModeBanner: false,
+      home: HomePage(),
+    );
   }
 }
