@@ -1,8 +1,7 @@
-import 'package:flight_tracker/classes/aircraft.dart';
+import 'package:flight_tracker/classes/aircraft_old.dart';
 import 'package:flight_tracker/classes/airline.dart';
 import 'package:flight_tracker/classes/airport_info.dart';
 import 'package:flight_tracker/classes/great_circle_distance.dart';
-import 'package:flight_tracker/classes/position.dart';
 
 class Flight {
   final GreatCircleDistance greatCircleDistance;
@@ -16,7 +15,6 @@ class Flight {
   final bool isCargo;
   final Aircraft aircraft;
   final Airline airline;
-  final Position position;
 
   Flight({
     required this.greatCircleDistance,
@@ -30,10 +28,9 @@ class Flight {
     required this.isCargo,
     required this.aircraft,
     required this.airline,
-    required this.position,
   });
 
-  factory Flight.fromJson(Map<String, dynamic> json, Position position) {
+  factory Flight.fromJson(Map<String, dynamic> json) {
     return Flight(
       greatCircleDistance: GreatCircleDistance.fromJson(
         json['greatCircleDistance'],
@@ -48,7 +45,6 @@ class Flight {
       isCargo: json['isCargo'],
       aircraft: Aircraft.fromJson(json['aircraft']),
       airline: Airline.fromJson(json['airline']),
-      position: position,
     );
   }
 }

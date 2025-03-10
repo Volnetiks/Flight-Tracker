@@ -1,15 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
+import 'package:flight_tracker/classes/aircraft.dart';
 import 'package:flight_tracker/classes/flight.dart';
-import 'package:flight_tracker/classes/position.dart';
 import 'package:flight_tracker/pages/info.dart';
 import 'package:flight_tracker/widgets/expandable_snackbar.dart';
 import 'package:flight_tracker/widgets/flight_state.dart';
 import 'package:flight_tracker/widgets/image_hero.dart';
 import 'package:flight_tracker/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,545 +25,144 @@ class _HomePageState extends State<HomePage> {
   Flight? flight;
   String data = "";
 
+  List<Marker> _markers = [];
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
+    fetchFlightData();
+    _timer = Timer.periodic(Duration(seconds: 50), (timer) {
+      fetchFlightData();
+    });
   }
 
-  void retrieveFlightInfo(String flightNumber) async {
-    String sandboxKey = "";
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
-    Map<String, String> headers = {
-      'Accept': 'application/json',
-      'Accept-Version': 'v1',
-      'Authorization': 'Bearer $sandboxKey',
-    };
+  Future<void> fetchFlightData() async {
+    String data =
+        "{\"ac\":[{\"hex\":\"4ab2cf\",\"type\":\"mlat\",\"flight\":\"SELVO   \",\"r\":\"SE-LVO\",\"t\":\"DA42\",\"alt_baro\":10025,\"gs\":152,\"ias\":125,\"tas\":146,\"mach\":0.23,\"wd\":233,\"ws\":26,\"track\":124.8,\"roll\":-0.53,\"mag_heading\":128.32,\"true_heading\":134.69,\"baro_rate\":-32,\"squawk\":\"7610\",\"nav_qnh\":1013,\"nav_altitude_mcp\":10000,\"lat\":52.102821,\"lon\":18.396711,\"nic\":0,\"rc\":0,\"seen_pos\":3.37,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":3255879,\"seen\":0,\"rssi\":-18.3},{\"hex\":\"48ad19\",\"type\":\"adsb_icao\",\"flight\":\"LOT2PJ  \",\"r\":\"SP-LIQ\",\"t\":\"E75S\",\"alt_baro\":28025,\"alt_geom\":27700,\"gs\":446.8,\"ias\":283,\"tas\":422,\"mach\":0.72,\"wd\":217,\"ws\":49,\"oat\":-47,\"tat\":-23,\"track\":93.46,\"track_rate\":0,\"roll\":0.18,\"mag_heading\":92.46,\"true_heading\":98.99,\"baro_rate\":-2624,\"geom_rate\":-2624,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":15008,\"nav_altitude_fms\":15008,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":52.411163,\"lon\":18.899702,\"nic\":8,\"rc\":186,\"seen_pos\":0.07,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":80807373,\"seen\":0.1,\"rssi\":-13.1},{\"hex\":\"4bb283\",\"type\":\"mlat\",\"flight\":\"THY6MD  \",\"r\":\"TC-LTC\",\"t\":\"A21N\",\"alt_baro\":32000,\"gs\":448,\"ias\":279,\"tas\":441,\"mach\":0.77,\"wd\":235,\"ws\":33,\"oat\":-56,\"tat\":-30,\"track\":338.91,\"track_rate\":0,\"roll\":-0.35,\"mag_heading\":329.06,\"true_heading\":334.69,\"baro_rate\":0,\"geom_rate\":-32,\"squawk\":\"5332\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":32000,\"nav_altitude_fms\":11008,\"gpsOkBefore\":1741616993.4,\"gpsOkLat\":52.733231,\"gpsOkLon\":19.132004,\"lat\":53.013439,\"lon\":18.953161,\"nic\":0,\"rc\":0,\"seen_pos\":8.99,\"version\":2,\"nic_baro\":1,\"nac_p\":0,\"nac_v\":0,\"sil\":0,\"sil_type\":\"perhour\",\"gva\":0,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":42619010,\"seen\":0,\"rssi\":-17.6},{\"hex\":\"ae07bf\",\"type\":\"mlat\",\"flight\":\"        \",\"r\":\"63-7979\",\"t\":\"K35R\",\"dbFlags\":1,\"alt_baro\":29075,\"gs\":414,\"ias\":276,\"tas\":416,\"mach\":0.71,\"wd\":243,\"ws\":24,\"oat\":-46,\"tat\":-23,\"track\":329.77,\"track_rate\":-0.06,\"roll\":-1.05,\"mag_heading\":320.1,\"true_heading\":326.44,\"baro_rate\":-352,\"geom_rate\":-416,\"squawk\":\"4155\",\"nav_qnh\":1012.7,\"nav_altitude_mcp\":29008,\"nav_altitude_fms\":34000,\"nav_modes\":[\"althold\"],\"lat\":51.180561,\"lon\":18.988791,\"nic\":0,\"rc\":0,\"seen_pos\":3.37,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":3300004,\"seen\":0.2,\"rssi\":-10.4},{\"hex\":\"48aca9\",\"type\":\"adsb_icao\",\"flight\":\"SPLFK   \",\"r\":\"SP-LFK\",\"t\":\"P208\",\"alt_baro\":2100,\"alt_geom\":1850,\"gs\":85.6,\"track\":173.29,\"geom_rate\":0,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":52.93634,\"lon\":19.070053,\"nic\":9,\"rc\":75,\"seen_pos\":0.3,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":9675280,\"seen\":0.3,\"rssi\":-11.7},{\"hex\":\"505eff\",\"type\":\"adsb_icao\",\"flight\":\"OMW904  \",\"alt_baro\":3925,\"alt_geom\":3675,\"gs\":133.5,\"ias\":137,\"mach\":0.22,\"track\":237.86,\"mag_heading\":218.67,\"true_heading\":225.32,\"baro_rate\":0,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"nav_qnh\":997.6,\"nav_altitude_mcp\":3488,\"nav_altitude_fms\":1504,\"nav_modes\":[\"althold\"],\"lat\":52.474365,\"lon\":19.207993,\"nic\":9,\"rc\":75,\"seen_pos\":0.31,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":0,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":0,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":1875709,\"seen\":0.3,\"rssi\":-7.3},{\"hex\":\"4bc88e\",\"type\":\"adsb_icao\",\"flight\":\"PGT80FF \",\"r\":\"TC-RDN\",\"t\":\"A21N\",\"alt_baro\":34950,\"alt_geom\":34525,\"gs\":434.4,\"ias\":262,\"tas\":436,\"mach\":0.77,\"wd\":244,\"ws\":32,\"oat\":-63,\"tat\":-38,\"track\":154.79,\"track_rate\":0,\"roll\":-0.18,\"mag_heading\":152.4,\"true_heading\":158.98,\"baro_rate\":0,\"geom_rate\":0,\"squawk\":\"6014\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":35008,\"lat\":52.169277,\"lon\":19.279436,\"nic\":8,\"rc\":186,\"seen_pos\":0.4,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":83710415,\"seen\":0.1,\"rssi\":-15.9},{\"hex\":\"48aca1\",\"type\":\"adsb_icao\",\"flight\":\"SPLFB   \",\"r\":\"SP-LFB\",\"t\":\"P208\",\"alt_baro\":2200,\"alt_geom\":2025,\"gs\":68,\"track\":208.07,\"geom_rate\":64,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":50.986942,\"lon\":19.284134,\"nic\":9,\"rc\":75,\"seen_pos\":0.36,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":7614679,\"seen\":0.4,\"rssi\":-14.9},{\"hex\":\"48da43\",\"type\":\"adsb_icao\",\"flight\":\"PLF633  \",\"r\":\"633\",\"t\":\"MI8\",\"dbFlags\":1,\"alt_baro\":1975,\"alt_geom\":1725,\"gs\":84.9,\"track\":278.13,\"geom_rate\":-256,\"squawk\":\"3122\",\"emergency\":\"none\",\"category\":\"A2\",\"lat\":51.984558,\"lon\":19.285889,\"nic\":9,\"rc\":75,\"seen_pos\":0.05,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":829392,\"seen\":0,\"rssi\":-10.2},{\"hex\":\"48adb9\",\"type\":\"adsb_icao\",\"flight\":\"LOT4VG  \",\"r\":\"SP-LNQ\",\"t\":\"E195\",\"alt_baro\":25000,\"alt_geom\":24850,\"gs\":446,\"ias\":300,\"tas\":430,\"mach\":0.72,\"wd\":205,\"ws\":41,\"oat\":-36,\"tat\":-11,\"track\":89.23,\"track_rate\":0,\"roll\":0,\"mag_heading\":87.71,\"true_heading\":94.2,\"baro_rate\":64,\"geom_rate\":32,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":15904,\"nav_altitude_fms\":25008,\"nav_modes\":[\"autopilot\",\"althold\",\"tcas\"],\"lat\":51.577652,\"lon\":19.300083,\"nic\":8,\"rc\":186,\"seen_pos\":0.4,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":69036909,\"seen\":0.1,\"rssi\":-11.6},{\"hex\":\"489470\",\"type\":\"adsb_icao\",\"flight\":\"BNI3GR  \",\"r\":\"SP-FDR\",\"t\":\"P208\",\"alt_baro\":3400,\"alt_geom\":3150,\"gs\":82.2,\"track\":184.18,\"geom_rate\":-128,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.850952,\"lon\":19.329605,\"nic\":9,\"rc\":75,\"seen_pos\":0.74,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":5828014,\"seen\":0.7,\"rssi\":-17.3},{\"hex\":\"48c310\",\"type\":\"adsb_icao\",\"flight\":\"BNI1BC  \",\"r\":\"SP-RVR\",\"t\":\"P06T\",\"alt_baro\":2000,\"alt_geom\":1725,\"gs\":108.2,\"track\":98.5,\"baro_rate\":-256,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"nav_qnh\":998.4,\"nav_altitude_mcp\":1600,\"nav_heading\":244.69,\"nav_modes\":[],\"lat\":51.705505,\"lon\":19.399481,\"nic\":9,\"rc\":75,\"seen_pos\":0.71,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":6665544,\"seen\":0.4,\"rssi\":-10.5},{\"hex\":\"01de72\",\"type\":\"adsb_icao\",\"flight\":\"SPRYR   \",\"alt_baro\":1400,\"alt_geom\":1150,\"gs\":71.6,\"track\":243.43,\"baro_rate\":-640,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"nav_qnh\":998.4,\"nav_altitude_mcp\":1600,\"nav_modes\":[\"althold\"],\"lat\":51.72876,\"lon\":19.428135,\"nic\":9,\"rc\":75,\"seen_pos\":0.71,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":1327528,\"seen\":0.7,\"rssi\":-15},{\"hex\":\"48acad\",\"type\":\"adsb_icao\",\"flight\":\"SPLFN   \",\"r\":\"SP-LFN\",\"t\":\"C172\",\"alt_baro\":2400,\"alt_geom\":2175,\"gs\":87.7,\"track\":117.15,\"geom_rate\":0,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.667877,\"lon\":19.437931,\"nic\":9,\"rc\":75,\"seen_pos\":0.4,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":10721493,\"seen\":0,\"rssi\":-14.8},{\"hex\":\"48988e\",\"type\":\"adsb_icao\",\"flight\":\"SPGEO   \",\"r\":\"SP-GEO\",\"t\":\"P68\",\"alt_baro\":3450,\"alt_geom\":3125,\"gs\":126.6,\"track\":84.56,\"baro_rate\":64,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":53.389877,\"lon\":19.438128,\"nic\":9,\"rc\":75,\"seen_pos\":0.33,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":2129439,\"seen\":0.3,\"rssi\":-20.5},{\"hex\":\"488d84\",\"type\":\"adsb_icao\",\"flight\":\"BNI7OA  \",\"r\":\"SP-DME\",\"t\":\"P208\",\"alt_baro\":2300,\"alt_geom\":2075,\"gs\":104.1,\"track\":348.37,\"geom_rate\":-128,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.552979,\"lon\":19.565462,\"nic\":9,\"rc\":75,\"seen_pos\":0.74,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":6818030,\"seen\":0.4,\"rssi\":-15.1},{\"hex\":\"484ee4\",\"type\":\"adsb_icao\",\"flight\":\"KLM49N  \",\"r\":\"PH-HSD\",\"t\":\"B738\",\"alt_baro\":14050,\"alt_geom\":13875,\"gs\":322.9,\"ias\":242,\"tas\":298,\"mach\":0.47,\"wd\":231,\"ws\":28,\"oat\":-11,\"tat\":1,\"track\":77.3,\"track_rate\":-0.03,\"roll\":-0.18,\"mag_heading\":72.95,\"true_heading\":79.72,\"baro_rate\":-1024,\"geom_rate\":-1056,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":10016,\"nav_heading\":73.83,\"lat\":52.438629,\"lon\":19.805132,\"nic\":8,\"rc\":186,\"seen_pos\":0.1,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":95212731,\"seen\":0,\"rssi\":-15.8},{\"hex\":\"489de4\",\"type\":\"adsb_icao\",\"flight\":\"SPHPE   \",\"r\":\"SP-HPE\",\"t\":\"R44\",\"alt_baro\":1725,\"alt_geom\":1450,\"gs\":56.3,\"track\":289.72,\"geom_rate\":-128,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A7\",\"lat\":51.52383,\"lon\":19.855804,\"nic\":9,\"rc\":75,\"seen_pos\":0.4,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":3254651,\"seen\":0.4,\"rssi\":-23.2},{\"hex\":\"452153\",\"type\":\"mlat\",\"flight\":\"SEU7227 \",\"r\":\"LZ-FSD\",\"t\":\"A320\",\"alt_baro\":34300,\"gs\":428,\"ias\":267,\"tas\":440,\"mach\":0.78,\"wd\":229,\"ws\":27,\"oat\":-61,\"tat\":-36,\"track\":163.83,\"track_rate\":0.03,\"roll\":0.35,\"mag_heading\":162.77,\"true_heading\":166.99,\"baro_rate\":512,\"geom_rate\":544,\"squawk\":\"6021\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":35008,\"nav_altitude_fms\":41984,\"lat\":51.69244,\"lon\":19.953243,\"nic\":0,\"rc\":0,\"seen_pos\":2.55,\"version\":2,\"nic_baro\":1,\"nac_p\":0,\"nac_v\":0,\"sil\":0,\"sil_type\":\"perhour\",\"gva\":0,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":61760026,\"seen\":0,\"rssi\":-17.9},{\"hex\":\"44081d\",\"type\":\"adsb_icao\",\"flight\":\"AUA624  \",\"r\":\"OE-LWA\",\"t\":\"E195\",\"alt_baro\":27575,\"alt_geom\":27450,\"gs\":405.1,\"ias\":290,\"tas\":430,\"mach\":0.73,\"wd\":260,\"ws\":43,\"oat\":-43,\"tat\":-19,\"track\":202.96,\"track_rate\":0,\"roll\":-0.35,\"mag_heading\":201.09,\"true_heading\":207.69,\"baro_rate\":1344,\"geom_rate\":1344,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":34016,\"nav_altitude_fms\":34000,\"nav_modes\":[\"autopilot\",\"vnav\",\"tcas\"],\"lat\":51.213913,\"lon\":20.04567,\"nic\":8,\"rc\":186,\"seen_pos\":0.21,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":99559688,\"seen\":0,\"rssi\":-16.2},{\"hex\":\"48ad08\",\"type\":\"adsb_icao\",\"flight\":\"LOT4KH  \",\"r\":\"SP-LII\",\"t\":\"E75S\",\"alt_baro\":22200,\"alt_geom\":22150,\"gs\":397.5,\"ias\":270,\"tas\":372,\"mach\":0.61,\"wd\":201,\"ws\":30,\"oat\":-30,\"tat\":-12,\"track\":51.95,\"track_rate\":0.03,\"roll\":-0.35,\"mag_heading\":47.81,\"true_heading\":54.38,\"baro_rate\":960,\"geom_rate\":960,\"squawk\":\"3704\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":23008,\"nav_altitude_fms\":23008,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":50.973907,\"lon\":20.059128,\"nic\":8,\"rc\":186,\"seen_pos\":0.12,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":92552316,\"seen\":0.1,\"rssi\":-22.4},{\"hex\":\"48ada8\",\"type\":\"mlat\",\"flight\":\"LOT7CW  \",\"r\":\"SP-LNI\",\"t\":\"E195\",\"alt_baro\":10675,\"gs\":286,\"ias\":230,\"tas\":270,\"mach\":0.42,\"wd\":241,\"ws\":18,\"oat\":-6,\"tat\":4,\"track\":88.24,\"track_rate\":0,\"roll\":0.18,\"mag_heading\":85.96,\"true_heading\":90,\"baro_rate\":-1024,\"geom_rate\":-992,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":7008,\"nav_altitude_fms\":7008,\"nav_modes\":[\"autopilot\",\"tcas\"],\"gpsOkBefore\":1741616791.3,\"gpsOkLat\":54.941391,\"gpsOkLon\":19.814893,\"lat\":52.44038,\"lon\":20.087547,\"nic\":0,\"rc\":0,\"seen_pos\":2.72,\"version\":2,\"nic_baro\":0,\"nac_p\":0,\"nac_v\":0,\"sil\":0,\"sil_type\":\"persample\",\"gva\":0,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":68787831,\"seen\":0.2,\"rssi\":-15.5},{\"hex\":\"48a4d5\",\"type\":\"adsb_icao\",\"flight\":\"SPKGZ   \",\"r\":\"SP-KGZ\",\"t\":\"C152\",\"alt_baro\":2425,\"gs\":79.3,\"track\":221.93,\"squawk\":\"7000\",\"category\":\"A0\",\"lat\":51.037308,\"lon\":20.198587,\"nic\":0,\"rc\":0,\"seen_pos\":0.59,\"version\":2,\"nic_baro\":1,\"nac_p\":0,\"nac_v\":0,\"sil\":0,\"sil_type\":\"perhour\",\"gva\":0,\"sda\":0,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":3429539,\"seen\":0.6,\"rssi\":-18.2},{\"hex\":\"488a72\",\"type\":\"mlat\",\"flight\":\"SPCUT   \",\"r\":\"SP-CUT\",\"t\":\"C182\",\"alt_baro\":2225,\"gs\":128,\"ias\":134,\"tas\":140,\"mach\":0.21,\"wd\":187,\"ws\":16,\"track\":141.15,\"roll\":-0.53,\"mag_heading\":139.04,\"true_heading\":145.93,\"baro_rate\":96,\"squawk\":\"7000\",\"nav_qnh\":998,\"nav_altitude_mcp\":1808,\"nav_modes\":[\"althold\"],\"lat\":52.380123,\"lon\":20.260115,\"nic\":0,\"rc\":0,\"seen_pos\":12.24,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":842589,\"seen\":1.3,\"rssi\":-5.6},{\"hex\":\"48ae81\",\"type\":\"adsb_icao\",\"flight\":\"LOT603  \",\"r\":\"SP-LWB\",\"t\":\"B738\",\"alt_baro\":24150,\"alt_geom\":23975,\"gs\":428.4,\"ias\":315,\"tas\":444,\"mach\":0.74,\"wd\":268,\"ws\":42,\"oat\":-36,\"tat\":-10,\"track\":195.43,\"track_rate\":-0.06,\"roll\":-0.53,\"mag_heading\":194.06,\"true_heading\":200.75,\"baro_rate\":1472,\"geom_rate\":1472,\"squawk\":\"4565\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":30016,\"nav_heading\":194.06,\"lat\":51.361404,\"lon\":20.303402,\"nic\":8,\"rc\":186,\"seen_pos\":0.3,\"version\":2,\"nic_baro\":1,\"nac_p\":8,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":1,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":65190897,\"seen\":0.2,\"rssi\":-10.5},{\"hex\":\"4bb274\",\"type\":\"adsb_icao\",\"flight\":\"THY2FH  \",\"r\":\"TC-LST\",\"t\":\"A21N\",\"alt_baro\":32000,\"alt_geom\":31750,\"gs\":438,\"ias\":266,\"tas\":424,\"mach\":0.74,\"wd\":214,\"ws\":24,\"oat\":-55,\"tat\":-31,\"track\":339.41,\"track_rate\":0.03,\"roll\":-0.35,\"mag_heading\":330.12,\"true_heading\":336.76,\"baro_rate\":0,\"geom_rate\":32,\"squawk\":\"5314\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":32000,\"lat\":51.092606,\"lon\":20.343412,\"nic\":8,\"rc\":186,\"seen_pos\":0.12,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":7909579,\"seen\":0.1,\"rssi\":-12.7},{\"hex\":\"48ad0e\",\"type\":\"adsb_icao\",\"flight\":\"LOT3HD  \",\"r\":\"SP-LIO\",\"t\":\"E75S\",\"alt_baro\":9650,\"alt_geom\":9500,\"gs\":286.8,\"ias\":231,\"tas\":268,\"mach\":0.42,\"wd\":222,\"ws\":33,\"oat\":0,\"tat\":10,\"track\":94.4,\"track_rate\":-0.03,\"roll\":-0.88,\"mag_heading\":93.16,\"true_heading\":100.1,\"baro_rate\":-1408,\"geom_rate\":-1376,\"squawk\":\"6034\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":5024,\"nav_altitude_fms\":5008,\"nav_modes\":[\"tcas\"],\"lat\":52.462921,\"lon\":20.407104,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":78402467,\"seen\":0.1,\"rssi\":-9.4},{\"hex\":\"48d82d\",\"type\":\"mlat\",\"flight\":\"PLF111  \",\"r\":\"0223\",\"t\":\"M28\",\"dbFlags\":1,\"alt_baro\":10000,\"gs\":146,\"ias\":134,\"tas\":158,\"mach\":0.24,\"wd\":252,\"ws\":18,\"track\":202.15,\"track_rate\":-0.09,\"roll\":-0.7,\"mag_heading\":200.21,\"true_heading\":206.99,\"baro_rate\":-96,\"geom_rate\":64,\"squawk\":\"4566\",\"category\":\"A0\",\"nav_altitude_mcp\":10000,\"lat\":51.552341,\"lon\":20.466278,\"nic\":0,\"rc\":0,\"seen_pos\":1.6,\"version\":0,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":1915774,\"seen\":0.2,\"rssi\":-8.8},{\"hex\":\"48adaf\",\"type\":\"adsb_icao\",\"flight\":\"LOT5YE  \",\"r\":\"SP-LNP\",\"t\":\"E195\",\"alt_baro\":5000,\"alt_geom\":4800,\"gs\":265.4,\"ias\":236,\"tas\":254,\"mach\":0.39,\"wd\":149,\"ws\":12,\"oat\":6,\"tat\":15,\"track\":337.4,\"track_rate\":0.06,\"roll\":0.53,\"mag_heading\":331,\"true_heading\":337.91,\"baro_rate\":-640,\"geom_rate\":-672,\"squawk\":\"4430\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":3008,\"nav_altitude_fms\":3008,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":52.175217,\"lon\":20.540161,\"nic\":8,\"rc\":186,\"seen_pos\":0.3,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":50648904,\"seen\":0.1,\"rssi\":-7.1},{\"hex\":\"48f3ad\",\"type\":\"adsb_icao\",\"flight\":\"SN85XP  \",\"r\":\"SN-85XP\",\"t\":\"B407\",\"alt_baro\":2125,\"alt_geom\":1875,\"gs\":95.6,\"track\":256.69,\"baro_rate\":-64,\"squawk\":\"7404\",\"emergency\":\"none\",\"category\":\"A7\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":1792,\"nav_heading\":246.8,\"lat\":52.416824,\"lon\":20.546036,\"nic\":9,\"rc\":75,\"seen_pos\":0.03,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":1427758,\"seen\":0,\"rssi\":-13.8},{\"hex\":\"48b00b\",\"type\":\"mlat\",\"flight\":\"SPMAL   \",\"r\":\"SP-MAL\",\"t\":\"PA30\",\"alt_baro\":1900,\"gs\":93,\"track\":328,\"baro_rate\":0,\"squawk\":\"7000\",\"lat\":52.49358,\"lon\":20.557182,\"nic\":0,\"rc\":0,\"seen_pos\":4.18,\"alert\":0,\"spi\":0,\"mlat\":[\"callsign\",\"gs\",\"track\",\"baro_rate\",\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":3916643,\"seen\":0.3,\"rssi\":-8},{\"hex\":\"48aca3\",\"type\":\"adsb_icao\",\"flight\":\"SPLFD   \",\"r\":\"SP-LFD\",\"t\":\"P208\",\"alt_baro\":2300,\"alt_geom\":2300,\"gs\":81.2,\"track\":183.53,\"geom_rate\":-512,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.043259,\"lon\":20.587858,\"nic\":9,\"rc\":75,\"seen_pos\":0.59,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":8728622,\"seen\":0.6,\"rssi\":-16.9},{\"hex\":\"48ad10\",\"type\":\"adsb_icao\",\"flight\":\"LOT5RJ  \",\"r\":\"SP-LIR\",\"t\":\"E75S\",\"alt_baro\":6650,\"alt_geom\":6475,\"gs\":288.1,\"ias\":249,\"tas\":274,\"mach\":0.42,\"wd\":131,\"ws\":18,\"oat\":2,\"tat\":12,\"track\":346.35,\"track_rate\":-0.16,\"roll\":-0.18,\"mag_heading\":341.54,\"true_heading\":348.45,\"baro_rate\":-1408,\"geom_rate\":-1408,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":3008,\"nav_altitude_fms\":3504,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":52.051918,\"lon\":20.638445,\"nic\":8,\"rc\":186,\"seen_pos\":0.31,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":90236701,\"seen\":0.1,\"rssi\":-7.4},{\"hex\":\"489826\",\"type\":\"mlat\",\"flight\":\"SPGBG   \",\"r\":\"SP-GBG\",\"t\":\"CRUZ\",\"alt_baro\":3800,\"gs\":111,\"track\":354,\"baro_rate\":-22,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.481113,\"lon\":20.676516,\"nic\":0,\"rc\":0,\"seen_pos\":0.26,\"version\":0,\"alert\":0,\"spi\":0,\"mlat\":[\"gs\",\"track\",\"baro_rate\",\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":661630,\"seen\":0.3,\"rssi\":-5.4},{\"hex\":\"48ac80\",\"type\":\"adsb_icao\",\"flight\":\"LOT8AU  \",\"r\":\"SP-LEA\",\"t\":\"E295\",\"alt_baro\":3375,\"alt_geom\":3150,\"gs\":195,\"ias\":191,\"tas\":202,\"mach\":0.31,\"wd\":191,\"ws\":25,\"oat\":-223,\"tat\":-217,\"track\":112.62,\"track_rate\":0.25,\"roll\":2.46,\"mag_heading\":112.32,\"true_heading\":119.3,\"baro_rate\":-64,\"geom_rate\":-32,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":3008,\"nav_altitude_fms\":3008,\"nav_modes\":[\"autopilot\",\"approach\",\"tcas\"],\"lat\":52.230194,\"lon\":20.737457,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":4,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":56766481,\"seen\":0.1,\"rssi\":-4.9},{\"hex\":\"48af07\",\"type\":\"adsb_icao\",\"flight\":\"LOT4LE  \",\"r\":\"SP-LVH\",\"t\":\"B38M\",\"alt_baro\":24175,\"alt_geom\":24125,\"gs\":398.2,\"ias\":271,\"tas\":386,\"mach\":0.64,\"wd\":220,\"ws\":18,\"oat\":-37,\"tat\":-17,\"track\":355.54,\"track_rate\":0.38,\"roll\":8.09,\"mag_heading\":346.64,\"true_heading\":353.39,\"baro_rate\":-1792,\"geom_rate\":-1760,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":11008,\"nav_altitude_fms\":11008,\"nav_heading\":355.08,\"lat\":51.11673,\"lon\":20.781021,\"nic\":8,\"rc\":186,\"seen_pos\":0,\"version\":2,\"nic_baro\":1,\"nac_p\":11,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":88404311,\"seen\":0,\"rssi\":-7.8},{\"hex\":\"489c03\",\"type\":\"adsb_icao\",\"flight\":\"SPHAD   \",\"r\":\"SP-HAD\",\"t\":\"R44\",\"alt_baro\":725,\"alt_geom\":450,\"gs\":5.7,\"track\":45,\"baro_rate\":-64,\"geom_rate\":-64,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A7\",\"lat\":52.268829,\"lon\":20.893631,\"nic\":9,\"rc\":75,\"seen_pos\":3.17,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":3295947,\"seen\":0.9,\"rssi\":-1.8},{\"hex\":\"489788\",\"type\":\"adsb_icao\",\"flight\":\"LOT2LK  \",\"r\":\"SP-LDH\",\"t\":\"E170\",\"alt_baro\":13525,\"alt_geom\":13475,\"gs\":320.9,\"ias\":270,\"tas\":328,\"mach\":0.52,\"wd\":252,\"ws\":32,\"oat\":-11,\"tat\":3,\"track\":172.3,\"track_rate\":0,\"roll\":-0.53,\"mag_heading\":170.86,\"true_heading\":177.78,\"baro_rate\":2368,\"geom_rate\":2336,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":24000,\"nav_altitude_fms\":24000,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":51.772934,\"lon\":20.933186,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":47012959,\"seen\":0.2,\"rssi\":-13.5},{\"hex\":\"48e805\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU01  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.165558,\"lon\":20.945244,\"nic\":11,\"rc\":8,\"seen_pos\":0.07,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":34504928,\"seen\":0.1,\"rssi\":-5.9},{\"hex\":\"48e911\",\"type\":\"adsb_icao_nt\",\"flight\":\"SOKOL2  \",\"alt_baro\":\"ground\",\"gs\":19.5,\"track\":112.5,\"baro_rate\":0,\"category\":\"C2\",\"lat\":52.167892,\"lon\":20.95005,\"nic\":10,\"rc\":25,\"seen_pos\":0.25,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":4299837,\"seen\":0.2,\"rssi\":-11.8},{\"hex\":\"48e8a7\",\"type\":\"adsb_icao_nt\",\"flight\":\"UTRZ32  \",\"alt_baro\":\"ground\",\"gs\":28.5,\"track\":33.75,\"category\":\"C2\",\"lat\":52.17524,\"lon\":20.952339,\"nic\":10,\"rc\":25,\"seen_pos\":1.2,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":1173469,\"seen\":1.2,\"rssi\":-12.5},{\"hex\":\"48e920\",\"type\":\"adsb_icao_nt\",\"flight\":\"STRAZ7  \",\"alt_baro\":\"ground\",\"gs\":0.2,\"category\":\"C2\",\"lat\":52.165752,\"lon\":20.954647,\"nic\":10,\"rc\":25,\"seen_pos\":0.96,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":17703428,\"seen\":1,\"rssi\":-2.2},{\"hex\":\"48e928\",\"type\":\"adsb_icao_nt\",\"flight\":\"STRAZ12 \",\"alt_baro\":\"ground\",\"gs\":0.2,\"category\":\"C2\",\"lat\":52.165535,\"lon\":20.95499,\"nic\":10,\"rc\":25,\"seen_pos\":0.96,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":11819505,\"seen\":0.2,\"rssi\":-8.9},{\"hex\":\"48e804\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU00  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.162434,\"lon\":20.959717,\"nic\":11,\"rc\":8,\"seen_pos\":0.5,\"version\":2,\"mlat\":[],\"tisb\":[],\"messages\":32218023,\"seen\":0.5,\"rssi\":-13.2},{\"hex\":\"48e8a5\",\"type\":\"adsb_icao_nt\",\"flight\":\"UTRZ259 \",\"alt_baro\":\"ground\",\"gs\":9.2,\"track\":11.25,\"baro_rate\":0,\"category\":\"C2\",\"lat\":52.182072,\"lon\":20.960522,\"nic\":10,\"rc\":25,\"seen_pos\":1.88,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":1447414,\"seen\":1.9,\"rssi\":-6.6},{\"hex\":\"48e9aa\",\"type\":\"adsb_icao_nt\",\"flight\":\"UTRZ160 \",\"alt_baro\":\"ground\",\"gs\":10.8,\"track\":8.44,\"baro_rate\":0,\"category\":\"C2\",\"lat\":52.182289,\"lon\":20.9606,\"nic\":10,\"rc\":25,\"seen_pos\":4.76,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":19371,\"seen\":0.9,\"rssi\":-3.5},{\"hex\":\"4a2181\",\"type\":\"adsb_icao\",\"flight\":\"LOT5FM  \",\"r\":\"YR-HLA\",\"t\":\"B738\",\"alt_baro\":\"ground\",\"gs\":0,\"track\":123,\"true_heading\":216.56,\"baro_rate\":0,\"squawk\":\"6031\",\"emergency\":\"none\",\"category\":\"A3\",\"lat\":52.175621,\"lon\":20.960855,\"nic\":0,\"rc\":0,\"seen_pos\":1.95,\"version\":2,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":110577091,\"seen\":1,\"rssi\":-2.3},{\"hex\":\"48af12\",\"type\":\"adsb_icao\",\"r\":\"SP-LVT\",\"t\":\"B38M\",\"alt_baro\":\"ground\",\"gs\":0,\"squawk\":\"2000\",\"emergency\":\"none\",\"lat\":52.179588,\"lon\":20.96138,\"nic\":8,\"rc\":186,\"seen_pos\":3.93,\"version\":2,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":49051378,\"seen\":3.1,\"rssi\":-3.3},{\"hex\":\"48e806\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU02  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.180729,\"lon\":20.962404,\"nic\":11,\"rc\":8,\"seen_pos\":0.07,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":27993104,\"seen\":0.1,\"rssi\":-3.8},{\"hex\":\"48e925\",\"type\":\"adsb_icao_nt\",\"flight\":\"STRAZ3  \",\"alt_baro\":\"ground\",\"gs\":0,\"category\":\"C2\",\"lat\":52.178375,\"lon\":20.964546,\"nic\":10,\"rc\":25,\"seen_pos\":1.88,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":18264025,\"seen\":1,\"rssi\":-5.8},{\"hex\":\"48e924\",\"type\":\"adsb_icao_nt\",\"alt_baro\":\"ground\",\"gs\":0.2,\"category\":\"C2\",\"lat\":52.178341,\"lon\":20.964661,\"nic\":10,\"rc\":25,\"seen_pos\":48.85,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":15267691,\"seen\":48.9,\"rssi\":-8.6},{\"hex\":\"48e915\",\"type\":\"adsb_icao_nt\",\"flight\":\"FLW5    \",\"alt_baro\":\"ground\",\"gs\":6.8,\"track\":25.31,\"baro_rate\":0,\"category\":\"C2\",\"lat\":52.173176,\"lon\":20.965248,\"nic\":10,\"rc\":25,\"seen_pos\":2.86,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":6150115,\"seen\":2.9,\"rssi\":-4.6},{\"hex\":\"48ad09\",\"type\":\"adsb_icao\",\"flight\":\"LOT6MC  \",\"r\":\"SP-LIK\",\"t\":\"E75S\",\"alt_baro\":\"ground\",\"gs\":5.8,\"tas\":372,\"track\":51.86,\"track_rate\":0.03,\"roll\":-0.18,\"true_heading\":208.12,\"squawk\":\"6022\",\"emergency\":\"none\",\"category\":\"A3\",\"lat\":52.173454,\"lon\":20.965519,\"nic\":8,\"rc\":186,\"seen_pos\":4.96,\"version\":2,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":86268052,\"seen\":5,\"rssi\":-6.1},{\"hex\":\"48ada3\",\"type\":\"adsb_icao\",\"flight\":\"LOT134  \",\"r\":\"SP-LND\",\"t\":\"E195\",\"alt_baro\":\"ground\",\"gs\":0,\"ias\":271,\"mach\":0.68,\"track\":44,\"mag_heading\":172.79,\"true_heading\":61.88,\"baro_rate\":1088,\"geom_rate\":1056,\"squawk\":\"5345\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.2,\"nav_altitude_mcp\":33008,\"nav_altitude_fms\":33008,\"nav_modes\":[],\"lat\":52.173443,\"lon\":20.968113,\"nic\":8,\"rc\":186,\"seen_pos\":0.25,\"version\":2,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":84124916,\"seen\":0.2,\"rssi\":-4.2},{\"hex\":\"48e891\",\"type\":\"adsb_icao_nt\",\"flight\":\"FLW4    \",\"alt_baro\":\"ground\",\"gs\":0,\"category\":\"C2\",\"lat\":52.173672,\"lon\":20.968323,\"nic\":10,\"rc\":25,\"seen_pos\":0.25,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":8514273,\"seen\":0.2,\"rssi\":-18.9},{\"hex\":\"46da6c\",\"type\":\"adsb_icao\",\"flight\":\"SEH4MP  \",\"r\":\"SX-VSL\",\"t\":\"A320\",\"alt_baro\":\"ground\",\"gs\":4.8,\"track\":330,\"true_heading\":331.88,\"baro_rate\":0,\"squawk\":\"4445\",\"emergency\":\"none\",\"category\":\"A3\",\"lat\":52.171211,\"lon\":20.968781,\"nic\":8,\"rc\":186,\"seen_pos\":2.95,\"version\":2,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":66351345,\"seen\":0.8,\"rssi\":-7.7},{\"hex\":\"48e9a0\",\"type\":\"adsb_icao_nt\",\"flight\":\"HOL65   \",\"alt_baro\":\"ground\",\"gs\":5.8,\"track\":329.06,\"category\":\"C2\",\"lat\":52.170044,\"lon\":20.969782,\"nic\":10,\"rc\":25,\"seen_pos\":3.11,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":1771287,\"seen\":3.1,\"rssi\":-9.5},{\"hex\":\"48e96d\",\"type\":\"adsb_icao_nt\",\"flight\":\"HOL2    \",\"alt_baro\":\"ground\",\"category\":\"C2\",\"lat\":52.174004,\"lon\":20.969976,\"nic\":10,\"rc\":25,\"seen_pos\":0.96,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":5134850,\"seen\":1,\"rssi\":-2.6},{\"hex\":\"48e970\",\"type\":\"adsb_icao_nt\",\"flight\":\"HOL7    \",\"alt_baro\":\"ground\",\"gs\":11.2,\"track\":146.25,\"category\":\"C2\",\"lat\":52.170361,\"lon\":20.970251,\"nic\":10,\"rc\":25,\"seen_pos\":1.88,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":2692963,\"seen\":1.9,\"rssi\":-7.9},{\"hex\":\"48e980\",\"type\":\"adsb_icao_nt\",\"flight\":\"HOL12   \",\"alt_baro\":\"ground\",\"gs\":10.2,\"track\":151.88,\"category\":\"C2\",\"lat\":52.171314,\"lon\":20.97086,\"nic\":10,\"rc\":25,\"seen_pos\":0.25,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":6027107,\"seen\":0.2,\"rssi\":-9.4},{\"hex\":\"48af01\",\"type\":\"adsb_icao\",\"flight\":\"LOT6JF  \",\"r\":\"SP-LVB\",\"t\":\"B38M\",\"alt_baro\":\"ground\",\"gs\":0,\"track\":0,\"true_heading\":70.31,\"baro_rate\":0,\"squawk\":\"2000\",\"emergency\":\"none\",\"category\":\"A3\",\"lat\":52.170033,\"lon\":20.971584,\"nic\":8,\"rc\":186,\"seen_pos\":4.06,\"version\":2,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":107789689,\"seen\":2.1,\"rssi\":-6.3},{\"hex\":\"48e897\",\"type\":\"adsb_icao_nt\",\"flight\":\"FLW3    \",\"alt_baro\":\"ground\",\"gs\":0,\"category\":\"C2\",\"lat\":52.169147,\"lon\":20.972195,\"nic\":10,\"rc\":25,\"seen_pos\":2.13,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":7060818,\"seen\":2.1,\"rssi\":-19.8},{\"hex\":\"7816bd\",\"type\":\"adsb_icao\",\"flight\":\"CSC9830 \",\"r\":\"B-308P\",\"t\":\"A332\",\"alt_baro\":\"ground\",\"gs\":20.5,\"true_heading\":331.88,\"squawk\":\"1000\",\"category\":\"A5\",\"lat\":52.163338,\"lon\":20.973244,\"nic\":8,\"rc\":186,\"seen_pos\":0.07,\"version\":2,\"nac_p\":9,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":27688050,\"seen\":0.1,\"rssi\":-4.4},{\"hex\":\"48ad0b\",\"type\":\"adsb_icao\",\"flight\":\"LOT3919 \",\"r\":\"SP-LIL\",\"t\":\"E75S\",\"alt_baro\":750,\"alt_geom\":525,\"gs\":157.5,\"ias\":165,\"tas\":168,\"mach\":0.25,\"wd\":186,\"ws\":14,\"track\":151.97,\"track_rate\":0,\"roll\":0.7,\"mag_heading\":147.83,\"true_heading\":154.85,\"baro_rate\":1728,\"geom_rate\":768,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":6016,\"nav_altitude_fms\":6000,\"nav_modes\":[],\"lat\":52.15871,\"lon\":20.973293,\"nic\":8,\"rc\":186,\"seen_pos\":0.25,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":81143552,\"seen\":0.2,\"rssi\":-3.9},{\"hex\":\"48e807\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU03  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.17556,\"lon\":20.973682,\"nic\":11,\"rc\":8,\"seen_pos\":1.2,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":31677569,\"seen\":0.2,\"rssi\":-10.2},{\"hex\":\"48e808\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU04  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.174213,\"lon\":20.973999,\"nic\":11,\"rc\":8,\"seen_pos\":1.04,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":35579727,\"seen\":0.2,\"rssi\":-5.6},{\"hex\":\"48ad0f\",\"type\":\"adsb_icao\",\"flight\":\"LOT3NC  \",\"r\":\"SP-LIP\",\"t\":\"E75L\",\"alt_baro\":\"ground\",\"alt_geom\":475,\"gs\":13.8,\"ias\":283,\"mach\":0.72,\"track\":113.7,\"track_rate\":0.09,\"roll\":-0.7,\"mag_heading\":92.46,\"true_heading\":295.31,\"baro_rate\":-2624,\"geom_rate\":-2656,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":6000,\"nav_altitude_fms\":6000,\"nav_modes\":[],\"lat\":52.16468,\"lon\":20.97753,\"nic\":8,\"rc\":186,\"seen_pos\":0.12,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":79616113,\"seen\":0.1,\"rssi\":-15.1},{\"hex\":\"48e896\",\"type\":\"adsb_icao_nt\",\"flight\":\"FLW7    \",\"alt_baro\":\"ground\",\"gs\":13.8,\"track\":98.44,\"category\":\"C2\",\"lat\":52.159378,\"lon\":20.980892,\"nic\":10,\"rc\":25,\"seen_pos\":0.25,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":6060001,\"seen\":0.2,\"rssi\":-5.6},{\"hex\":\"48e927\",\"type\":\"adsb_icao_nt\",\"flight\":\"STRAZ4  \",\"alt_baro\":\"ground\",\"gs\":0,\"category\":\"C2\",\"lat\":52.164494,\"lon\":20.980906,\"nic\":10,\"rc\":25,\"seen_pos\":0.96,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":18667746,\"seen\":1,\"rssi\":-2.6},{\"hex\":\"48e80a\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU06  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.156311,\"lon\":20.981617,\"nic\":11,\"rc\":8,\"seen_pos\":0.25,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":14326789,\"seen\":0.2,\"rssi\":-20.4},{\"hex\":\"48e972\",\"type\":\"adsb_icao_nt\",\"flight\":\"HOL11   \",\"alt_baro\":\"ground\",\"gs\":0,\"category\":\"C2\",\"lat\":52.156883,\"lon\":20.982002,\"nic\":10,\"rc\":25,\"seen_pos\":2.86,\"version\":0,\"nac_p\":10,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":6245121,\"seen\":2.9,\"rssi\":-2.6},{\"hex\":\"48e809\",\"type\":\"adsb_icao_nt\",\"flight\":\"TXLU05  \",\"r\":\"TWR\",\"t\":\"TWR\",\"alt_baro\":\"ground\",\"category\":\"C0\",\"lat\":52.164036,\"lon\":20.983505,\"nic\":11,\"rc\":8,\"seen_pos\":0.25,\"version\":0,\"nac_p\":11,\"sil\":2,\"sil_type\":\"unknown\",\"mlat\":[],\"tisb\":[],\"messages\":24982843,\"seen\":0.2,\"rssi\":-15.9},{\"hex\":\"489789\",\"type\":\"adsb_icao\",\"flight\":\"LOT3966 \",\"r\":\"SP-LDI\",\"t\":\"E170\",\"alt_baro\":\"ground\",\"gs\":9.2,\"track\":0,\"true_heading\":202.5,\"baro_rate\":0,\"squawk\":\"1000\",\"category\":\"A3\",\"lat\":52.161804,\"lon\":20.984339,\"nic\":8,\"rc\":186,\"seen_pos\":0.25,\"version\":2,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":62408983,\"seen\":0.2,\"rssi\":-13.2},{\"hex\":\"488284\",\"type\":\"adsb_icao\",\"flight\":\"SPAWE   \",\"r\":\"SP-AWE\",\"t\":\"P208\",\"alt_baro\":2225,\"alt_geom\":1950,\"gs\":81.2,\"track\":175.76,\"geom_rate\":64,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":52.496494,\"lon\":21.010569,\"nic\":9,\"rc\":75,\"seen_pos\":0.25,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":5440568,\"seen\":0.1,\"rssi\":-7.6},{\"hex\":\"471f3d\",\"type\":\"adsb_icao\",\"flight\":\"WZZ4595 \",\"r\":\"HA-LVP\",\"t\":\"A21N\",\"alt_baro\":4550,\"alt_geom\":4325,\"gs\":175.5,\"ias\":176,\"tas\":188,\"mach\":0.29,\"wd\":197,\"ws\":17,\"track\":168.5,\"track_rate\":0.12,\"roll\":1.05,\"mag_heading\":163.48,\"true_heading\":170.49,\"baro_rate\":1536,\"geom_rate\":1568,\"squawk\":\"2206\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":23008,\"lat\":52.088562,\"lon\":21.017151,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":96291883,\"seen\":0,\"rssi\":-9.2},{\"hex\":\"3d115e\",\"type\":\"mode_s\",\"flight\":\"DEEVE   \",\"r\":\"D-EEVE\",\"t\":\"C172\",\"alt_baro\":1850,\"gs\":87,\"oat\":0,\"tat\":0,\"track\":67,\"baro_rate\":0,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A0\",\"lat\":52.506222,\"lon\":21.096809,\"nic\":0,\"rc\":0,\"seen_pos\":50.67,\"version\":0,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":1690579,\"seen\":0.3,\"rssi\":-9.6},{\"hex\":\"48b647\",\"type\":\"adsb_icao\",\"flight\":\"SPNTH   \",\"r\":\"SP-NTH\",\"t\":\"DV20\",\"alt_baro\":1975,\"alt_geom\":1700,\"gs\":104.1,\"track\":256.1,\"baro_rate\":-192,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A2\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":1504,\"lat\":51.314625,\"lon\":21.158371,\"nic\":9,\"rc\":75,\"seen_pos\":0.36,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":8234895,\"seen\":0.3,\"rssi\":-3.6},{\"hex\":\"48d922\",\"type\":\"adsb_icao\",\"flight\":\"REMUR04 \",\"r\":\"045\",\"t\":\"PZ3T\",\"dbFlags\":1,\"alt_baro\":2600,\"alt_geom\":2400,\"gs\":198,\"track\":71.75,\"geom_rate\":448,\"squawk\":\"3115\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.354427,\"lon\":21.210251,\"nic\":9,\"rc\":75,\"seen_pos\":0.25,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":2731050,\"seen\":0.2,\"rssi\":-12.1},{\"hex\":\"98bd91\",\"type\":\"mlat\",\"flight\":\"SPGBE   \",\"alt_baro\":2200,\"gs\":84,\"track\":226,\"baro_rate\":113,\"squawk\":\"7000\",\"lat\":52.47448,\"lon\":21.214119,\"nic\":0,\"rc\":0,\"seen_pos\":3.13,\"alert\":0,\"spi\":0,\"mlat\":[\"gs\",\"track\",\"baro_rate\",\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":3984263,\"seen\":0.1,\"rssi\":-5.7},{\"hex\":\"48d908\",\"type\":\"adsb_icao\",\"flight\":\"REMUR14 \",\"r\":\"042\",\"t\":\"PZ3T\",\"dbFlags\":1,\"alt_baro\":1900,\"gs\":136.6,\"track\":75.15,\"squawk\":\"3116\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":51.376026,\"lon\":21.278458,\"nic\":0,\"rc\":0,\"seen_pos\":0.3,\"version\":2,\"nic_baro\":0,\"nac_p\":0,\"nac_v\":0,\"sil\":1,\"sil_type\":\"perhour\",\"gva\":0,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":450144,\"seen\":0.2,\"rssi\":-12.6},{\"hex\":\"4aca8c\",\"type\":\"adsb_icao\",\"flight\":\"NSZ83AH \",\"r\":\"SE-RTL\",\"t\":\"B38M\",\"alt_baro\":38275,\"alt_geom\":37700,\"gs\":462.2,\"ias\":239,\"tas\":432,\"mach\":0.76,\"wd\":244,\"ws\":35,\"oat\":-63,\"tat\":-38,\"track\":35.13,\"track_rate\":-0.31,\"roll\":-7.91,\"mag_heading\":26.02,\"true_heading\":33.18,\"baro_rate\":512,\"geom_rate\":544,\"squawk\":\"0462\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":39008,\"nav_altitude_fms\":39008,\"nav_heading\":21.8,\"lat\":52.485134,\"lon\":21.426714,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":136690335,\"seen\":0.1,\"rssi\":-12.8},{\"hex\":\"489ecf\",\"type\":\"mlat\",\"flight\":\"LPR12   \",\"r\":\"SP-HXP\",\"t\":\"EC35\",\"alt_baro\":1075,\"gs\":94,\"track\":83,\"baro_rate\":-540,\"squawk\":\"0001\",\"lat\":52.324085,\"lon\":21.426731,\"nic\":0,\"rc\":0,\"seen_pos\":17.35,\"alert\":0,\"spi\":0,\"mlat\":[\"callsign\",\"gs\",\"track\",\"baro_rate\",\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":2580991,\"seen\":1.3,\"rssi\":-4.9},{\"hex\":\"48ada7\",\"type\":\"adsb_icao\",\"flight\":\"LOT6CV  \",\"r\":\"SP-LNH\",\"t\":\"E195\",\"alt_baro\":27125,\"alt_geom\":26975,\"gs\":383.9,\"ias\":270,\"tas\":400,\"mach\":0.68,\"wd\":247,\"ws\":48,\"oat\":-45,\"tat\":-24,\"track\":172.97,\"track_rate\":0,\"roll\":0,\"mag_heading\":172.79,\"true_heading\":179.64,\"baro_rate\":1088,\"geom_rate\":1088,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":33024,\"nav_altitude_fms\":33008,\"nav_modes\":[\"autopilot\",\"tcas\"],\"lat\":50.855293,\"lon\":21.444244,\"nic\":8,\"rc\":186,\"seen_pos\":0.43,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":55127448,\"seen\":0.1,\"rssi\":-9.8},{\"hex\":\"48be24\",\"type\":\"adsb_icao\",\"flight\":\"SPPSE   \",\"r\":\"SP-PSE\",\"t\":\"R66\",\"alt_baro\":1725,\"alt_geom\":1450,\"gs\":99.6,\"tas\":92,\"wd\":167,\"ws\":14,\"track\":287.53,\"mag_heading\":266.84,\"true_heading\":274,\"baro_rate\":128,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A7\",\"lat\":52.101837,\"lon\":21.587524,\"nic\":9,\"rc\":75,\"seen_pos\":0.31,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":2758445,\"seen\":0.3,\"rssi\":-13.7},{\"hex\":\"488280\",\"type\":\"adsb_icao\",\"flight\":\"SPAWA   \",\"r\":\"SP-AWA\",\"t\":\"P208\",\"alt_baro\":2200,\"alt_geom\":1950,\"gs\":77.9,\"track\":105.64,\"geom_rate\":192,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A1\",\"lat\":52.839024,\"lon\":21.731428,\"nic\":9,\"rc\":75,\"seen_pos\":0.63,\"version\":2,\"nic_baro\":0,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":10652490,\"seen\":0.3,\"rssi\":-5.9},{\"hex\":\"48b120\",\"type\":\"adsb_icao\",\"flight\":\"SPMKA   \",\"r\":\"SP-MKA\",\"t\":\"DA40\",\"alt_baro\":2475,\"alt_geom\":2225,\"gs\":97.1,\"track\":272.95,\"baro_rate\":-448,\"squawk\":\"6503\",\"emergency\":\"none\",\"category\":\"A1\",\"nav_qnh\":999.2,\"nav_altitude_mcp\":2496,\"lat\":52.200394,\"lon\":21.818771,\"nic\":9,\"rc\":75,\"seen_pos\":0.31,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":5579804,\"seen\":0.3,\"rssi\":-7.2},{\"hex\":\"48af0e\",\"type\":\"adsb_icao\",\"flight\":\"LOT7MN  \",\"r\":\"SP-LVO\",\"t\":\"B38M\",\"alt_baro\":16725,\"alt_geom\":16575,\"gs\":384.5,\"ias\":283,\"tas\":360,\"mach\":0.58,\"wd\":225,\"ws\":29,\"oat\":-19,\"tat\":-2,\"track\":77.23,\"track_rate\":0,\"roll\":-0.18,\"mag_heading\":72.42,\"true_heading\":79.68,\"baro_rate\":1920,\"geom_rate\":1920,\"squawk\":\"6026\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":23008,\"nav_altitude_fms\":23008,\"nav_heading\":71.72,\"lat\":52.289291,\"lon\":21.92337,\"nic\":8,\"rc\":186,\"seen_pos\":0.5,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":74229848,\"seen\":0.2,\"rssi\":-10.6},{\"hex\":\"48e9ae\",\"type\":\"adsb_icao\",\"flight\":\"SPJNO   \",\"alt_baro\":2125,\"alt_geom\":1850,\"gs\":113.8,\"track\":337.26,\"geom_rate\":64,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A7\",\"lat\":52.813652,\"lon\":22.293457,\"nic\":9,\"rc\":75,\"seen_pos\":0.33,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":412744,\"seen\":0.3,\"rssi\":-18.6},{\"hex\":\"4bb879\",\"type\":\"adsb_icao\",\"flight\":\"PGT1581 \",\"r\":\"TC-NCY\",\"t\":\"A20N\",\"alt_baro\":38000,\"alt_geom\":37525,\"gs\":413.6,\"ias\":246,\"tas\":438,\"mach\":0.78,\"wd\":254,\"ws\":47,\"oat\":-63,\"tat\":-38,\"track\":192.99,\"track_rate\":0,\"roll\":-0.35,\"mag_heading\":190.9,\"true_heading\":198.16,\"baro_rate\":0,\"geom_rate\":-32,\"squawk\":\"1140\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":38016,\"lat\":51.81818,\"lon\":22.425308,\"nic\":8,\"rc\":186,\"seen_pos\":0.04,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":98606944,\"seen\":0,\"rssi\":-14.6},{\"hex\":\"010147\",\"type\":\"mlat\",\"flight\":\"MSR730  \",\"r\":\"SU-GEA\",\"t\":\"B738\",\"alt_baro\":38000,\"gs\":424,\"ias\":248,\"tas\":444,\"mach\":0.78,\"wd\":262,\"ws\":62,\"oat\":-62,\"tat\":-36,\"track\":187.21,\"track_rate\":0,\"roll\":0.18,\"mag_heading\":187.56,\"true_heading\":194.9,\"baro_rate\":96,\"geom_rate\":0,\"squawk\":\"1163\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":38016,\"nav_altitude_fms\":38000,\"nav_heading\":187.73,\"lat\":52.14994,\"lon\":22.441488,\"nic\":0,\"rc\":0,\"seen_pos\":0.31,\"version\":2,\"nic_baro\":1,\"nac_p\":0,\"sil\":0,\"sil_type\":\"unknown\",\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":35523240,\"seen\":0,\"rssi\":-14.5},{\"hex\":\"48d160\",\"type\":\"adsb_icao\",\"flight\":\"SPWLA   \",\"r\":\"SP-WLA\",\"t\":\"C152\",\"alt_baro\":2825,\"alt_geom\":2675,\"gs\":68,\"track\":243.81,\"geom_rate\":-896,\"squawk\":\"7000\",\"emergency\":\"none\",\"category\":\"A7\",\"lat\":51.064133,\"lon\":22.577944,\"nic\":8,\"rc\":186,\"seen_pos\":0.33,\"version\":2,\"nic_baro\":0,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":1,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":5522080,\"seen\":0.1,\"rssi\":-18.8},{\"hex\":\"502d44\",\"type\":\"adsb_icao\",\"flight\":\"BTI3FA  \",\"r\":\"YL-ABC\",\"t\":\"BCS3\",\"alt_baro\":38000,\"alt_geom\":37525,\"gs\":434.7,\"ias\":235,\"tas\":422,\"mach\":0.75,\"wd\":251,\"ws\":28,\"oat\":-64,\"tat\":-40,\"track\":9.27,\"track_rate\":0.03,\"roll\":0.53,\"mag_heading\":358.59,\"true_heading\":5.85,\"baro_rate\":-32,\"geom_rate\":-64,\"squawk\":\"1735\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":38016,\"nav_altitude_fms\":3776,\"nav_heading\":358.59,\"lat\":51.541443,\"lon\":22.686026,\"nic\":8,\"rc\":186,\"seen_pos\":0.04,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":100525123,\"seen\":0,\"rssi\":-13.6},{\"hex\":\"502d27\",\"type\":\"adsb_icao\",\"flight\":\"BTI6GN  \",\"r\":\"YL-AAW\",\"t\":\"BCS3\",\"alt_baro\":38000,\"alt_geom\":37500,\"gs\":437.6,\"ias\":234,\"tas\":420,\"mach\":0.74,\"wd\":240,\"ws\":30,\"oat\":-63,\"tat\":-40,\"track\":9.2,\"track_rate\":0,\"roll\":0,\"mag_heading\":358.77,\"true_heading\":6.15,\"baro_rate\":0,\"geom_rate\":0,\"squawk\":\"1000\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":38016,\"nav_heading\":358.59,\"lat\":51.9841,\"lon\":22.800598,\"nic\":8,\"rc\":186,\"seen_pos\":0,\"version\":2,\"nic_baro\":1,\"nac_p\":10,\"nac_v\":1,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":2,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":43958505,\"seen\":0,\"rssi\":-13.1},{\"hex\":\"4d241e\",\"type\":\"adsb_icao\",\"flight\":\"WZZ89YB \",\"r\":\"9H-WAI\",\"t\":\"A21N\",\"alt_baro\":35025,\"alt_geom\":34550,\"gs\":443.7,\"ias\":256,\"tas\":428,\"mach\":0.76,\"wd\":246,\"ws\":31,\"oat\":-62,\"tat\":-38,\"track\":7.38,\"track_rate\":0,\"roll\":-0.18,\"mag_heading\":356.13,\"true_heading\":3.81,\"baro_rate\":0,\"geom_rate\":-32,\"squawk\":\"5372\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1012.8,\"nav_altitude_mcp\":35008,\"nav_altitude_fms\":27392,\"lat\":53.237411,\"lon\":22.823313,\"nic\":8,\"rc\":186,\"seen_pos\":0.04,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":1,\"sda\":3,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":108581082,\"seen\":0,\"rssi\":-23.3},{\"hex\":\"4bb06d\",\"type\":\"adsb_icao\",\"flight\":\"THY3PH  \",\"r\":\"TC-LCM\",\"t\":\"B38M\",\"alt_baro\":36000,\"alt_geom\":35475,\"gs\":456.2,\"ias\":258,\"tas\":440,\"mach\":0.78,\"wd\":243,\"ws\":28,\"oat\":-64,\"tat\":-38,\"track\":9.46,\"track_rate\":-0.03,\"roll\":-0.18,\"mag_heading\":358.77,\"true_heading\":6.47,\"baro_rate\":0,\"geom_rate\":0,\"squawk\":\"5371\",\"emergency\":\"none\",\"category\":\"A3\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":36000,\"nav_altitude_fms\":36000,\"nav_heading\":359.3,\"lat\":53.054169,\"lon\":23.083344,\"nic\":8,\"rc\":186,\"seen_pos\":0.54,\"version\":2,\"nic_baro\":1,\"nac_p\":9,\"nac_v\":2,\"sil\":3,\"sil_type\":\"perhour\",\"gva\":1,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[],\"tisb\":[],\"messages\":67073754,\"seen\":0.2,\"rssi\":-5.7},{\"hex\":\"4ba9c3\",\"type\":\"mlat\",\"flight\":\"THY3CE  \",\"r\":\"TC-JNC\",\"t\":\"A332\",\"alt_baro\":40000,\"gs\":440,\"ias\":247,\"tas\":462,\"mach\":0.81,\"wd\":254,\"ws\":42,\"oat\":-60,\"tat\":-32,\"track\":192.66,\"track_rate\":0.03,\"roll\":0.18,\"mag_heading\":191.07,\"true_heading\":197.23,\"baro_rate\":0,\"geom_rate\":32,\"squawk\":\"6246\",\"emergency\":\"none\",\"category\":\"A5\",\"nav_qnh\":1013.6,\"nav_altitude_mcp\":40000,\"lat\":53.098717,\"lon\":23.115467,\"nic\":0,\"rc\":0,\"seen_pos\":4.03,\"version\":2,\"nic_baro\":1,\"nac_p\":0,\"nac_v\":0,\"sil\":0,\"sil_type\":\"persample\",\"gva\":0,\"sda\":2,\"alert\":0,\"spi\":0,\"mlat\":[\"lat\",\"lon\",\"nic\",\"rc\"],\"tisb\":[],\"messages\":62149198,\"seen\":0,\"rssi\":-14.1}],\"msg\":\"No error\",\"now\":1741617151973,\"total\":96,\"ctime\":1741617148001,\"ptime\":0}";
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://fr24api.flightradar24.com/api/live/flight-positions/full?flights=$flightNumber',
-        ),
-        headers: headers,
-      );
+    final dataJSON = jsonDecode(data);
 
-      if (response.statusCode == 200) {
-        Map<String, dynamic> data = jsonDecode(response.body);
+    List<Marker> newMarkers = [];
 
-        Position position = Position.fromJson(data["data"][0]);
+    for (var acData in dataJSON["ac"]) {
+      Aircraft aircraft = Aircraft.fromJson(acData);
 
-        if (flightNumber == "AF1247") {
-          setState(() {
-            List<dynamic> jsonList = [
-              {
-                "departure": {
-                  "airport": {"name": "Warsaw"},
-                  "quality": [],
-                },
-                "arrival": {
-                  "airport": {
-                    "icao": "LFPG",
-                    "iata": "CDG",
-                    "name": "Paris Charles de Gaulle",
-                    "shortName": "Charles de Gaulle",
-                    "municipalityName": "Paris",
-                    "location": {"lat": 49.0128, "lon": 2.549999},
-                    "countryCode": "FR",
-                    "timeZone": "Europe/Paris",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 08:10Z",
-                    "local": "2025-03-09 09:10+01:00",
-                  },
-                  "terminal": "2F",
-                  "quality": ["Basic"],
-                },
-                "lastUpdatedUtc": "2024-03-31 08:44Z",
-                "number": "AF 1247",
-                "status": "Unknown",
-                "codeshareStatus": "Unknown",
-                "isCargo": false,
-                "aircraft": {
-                  "model": "Airbus A220-300",
-                  "image": {
-                    "url":
-                        "https://farm66.staticflickr.com/65535/52377416448_f5648e9903_z.jpg",
-                    "webUrl":
-                        "https://www.flickr.com/photos/58415659@N00/52377416448/",
-                    "author": "kitmasterbloke",
-                    "title":
-                        "F-HZUH - CS300 / Airbus A220-300 - Air France CDG 180922",
-                    "description":
-                        "Changing planes from 2E-L to 2F and a bus gate to the J stands gave some good views of the AF/Hop domestic gates.",
-                    "license": "AttributionCC",
-                    "htmlAttributions": [
-                      "Original of \"<span property='dc:title' itemprop='name'>F-HZUH - CS300 / Airbus A220-300 - Air France CDG 180922</span>\" by <a rel='dc:creator nofollow' property='cc:attributionName' href='https://www.flickr.com/photos/58415659@N00/52377416448/' target='_blank'><span itemprop='producer'>kitmasterbloke</span></a>.",
-                      "Shared and hosted by <span itemprop='publisher'>Flickr</span> under <a target=\"_blank\" rel=\"license cc:license nofollow\" href=\"https://creativecommons.org/licenses/by/2.0/\">CC BY</a>",
-                    ],
-                  },
-                },
-                "airline": {"name": "Air France", "iata": "AF", "icao": "AFR"},
-              },
-              {
-                "greatCircleDistance": {
-                  "meter": 1346440.48,
-                  "km": 1346.44,
-                  "mile": 836.64,
-                  "nm": 727.02,
-                  "feet": 4417455.63,
-                },
-                "departure": {
-                  "airport": {
-                    "icao": "EPWA",
-                    "iata": "WAW",
-                    "name": "Warsaw Chopin",
-                    "shortName": "Chopin",
-                    "municipalityName": "Warsaw",
-                    "location": {"lat": 52.1657, "lon": 20.9671},
-                    "countryCode": "PL",
-                    "timeZone": "Europe/Warsaw",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 10:35Z",
-                    "local": "2025-03-09 11:35+01:00",
-                  },
-                  "revisedTime": {
-                    "utc": "2025-03-09 10:35Z",
-                    "local": "2025-03-09 11:35+01:00",
-                  },
-                  "terminal": "C",
-                  "checkInDesk": "201-206",
-                  "gate": "37",
-                  "quality": ["Basic", "Live"],
-                },
-                "arrival": {
-                  "airport": {
-                    "icao": "LFPG",
-                    "iata": "CDG",
-                    "name": "Paris Charles de Gaulle",
-                    "shortName": "Charles de Gaulle",
-                    "municipalityName": "Paris",
-                    "location": {"lat": 49.0128, "lon": 2.549999},
-                    "countryCode": "FR",
-                    "timeZone": "Europe/Paris",
-                  },
-                  "predictedTime": {
-                    "utc": "2025-03-09 12:55Z",
-                    "local": "2025-03-09 13:55+01:00",
-                  },
-                  "quality": [],
-                },
-                "lastUpdatedUtc": "2025-03-09 11:46Z",
-                "number": "AF 1247",
-                "status": "Departed",
-                "codeshareStatus": "IsOperator",
-                "isCargo": false,
-                "aircraft": {
-                  "model": "Airbus A220-300",
-                  "image": {
-                    "url":
-                        "https://farm66.staticflickr.com/65535/52377416448_f5648e9903_z.jpg",
-                    "webUrl":
-                        "https://www.flickr.com/photos/58415659@N00/52377416448/",
-                    "author": "kitmasterbloke",
-                    "title":
-                        "F-HZUH - CS300 / Airbus A220-300 - Air France CDG 180922",
-                    "description":
-                        "Changing planes from 2E-L to 2F and a bus gate to the J stands gave some good views of the AF/Hop domestic gates.",
-                    "license": "AttributionCC",
-                    "htmlAttributions": [
-                      "Original of \"<span property='dc:title' itemprop='name'>F-HZUH - CS300 / Airbus A220-300 - Air France CDG 180922</span>\" by <a rel='dc:creator nofollow' property='cc:attributionName' href='https://www.flickr.com/photos/58415659@N00/52377416448/' target='_blank'><span itemprop='producer'>kitmasterbloke</span></a>.",
-                      "Shared and hosted by <span itemprop='publisher'>Flickr</span> under <a target=\"_blank\" rel=\"license cc:license nofollow\" href=\"https://creativecommons.org/licenses/by/2.0/\">CC BY</a>",
-                    ],
-                  },
-                },
-                "airline": {"name": "Air France", "iata": "AF", "icao": "AFR"},
-              },
-            ];
+      if (aircraft.lat != null && aircraft.lon != null) {
+        newMarkers.add(
+          Marker(
+            width: 30.0,
+            height: 30.0,
+            point: LatLng(aircraft.lat!, aircraft.lon!),
+            child: Transform.rotate(
+              angle: (aircraft.track ?? 0 * (3.14159 / 180)),
+              child: GestureDetector(
+                onTap: () async {
+                  print(aircraft.hex);
+                  print(aircraft.flight);
 
-            flight = Flight.fromJson(jsonList.last, position);
-          });
-        } else if (flightNumber == "AF2") {
-          setState(() {
-            List<dynamic> jsonList = [
-              {
-                "greatCircleDistance": {
-                  "meter": 5849319.91,
-                  "km": 5849.32,
-                  "mile": 3634.6,
-                  "nm": 3158.38,
-                  "feet": 19190682.13,
-                },
-                "departure": {
-                  "airport": {
-                    "icao": "LFPG",
-                    "iata": "CDG",
-                    "name": "Paris Charles de Gaulle",
-                    "shortName": "Charles de Gaulle",
-                    "municipalityName": "Paris",
-                    "location": {"lat": 49.0128, "lon": 2.549999},
-                    "countryCode": "FR",
-                    "timeZone": "Europe/Paris",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 07:30Z",
-                    "local": "2025-03-09 08:30+01:00",
-                  },
-                  "revisedTime": {
-                    "utc": "2025-03-09 07:56Z",
-                    "local": "2025-03-09 08:56+01:00",
-                  },
-                  "runwayTime": {
-                    "utc": "2025-03-09 07:56Z",
-                    "local": "2025-03-09 08:56+01:00",
-                  },
-                  "terminal": "2E",
-                  "runway": "08L",
-                  "quality": ["Basic", "Live"],
-                },
-                "arrival": {
-                  "airport": {
-                    "icao": "KJFK",
-                    "iata": "JFK",
-                    "name": "New York John F Kennedy",
-                    "shortName": "John F Kennedy",
-                    "municipalityName": "New York",
-                    "location": {"lat": 40.6398, "lon": -73.7789},
-                    "countryCode": "US",
-                    "timeZone": "America/New_York",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 15:40Z",
-                    "local": "2025-03-09 11:40-04:00",
-                  },
-                  "predictedTime": {
-                    "utc": "2025-03-09 15:45Z",
-                    "local": "2025-03-09 11:45-04:00",
-                  },
-                  "terminal": "1",
-                  "quality": ["Basic"],
-                },
-                "lastUpdatedUtc": "2025-03-09 08:05Z",
-                "number": "AF 2",
-                "callSign": "AFR002",
-                "status": "Departed",
-                "codeshareStatus": "IsOperator",
-                "isCargo": false,
-                "aircraft": {
-                  "reg": "F-HUVF",
-                  "modeS": "39D2A5",
-                  "model": "Airbus A350-900",
-                  "image": {
-                    "url":
-                        "https://farm66.staticflickr.com/65535/51773701159_785d0b4157_z.jpg",
-                    "webUrl":
-                        "https://www.flickr.com/photos/48518396@N08/51773701159/",
-                    "author": "Olivier CABARET",
-                    "title": "Airbus A350-900 Flight test (F-WZNB) Air France",
-                    "description": "",
-                    "license": "AttributionCC",
-                    "htmlAttributions": [
-                      "Original of \"<span property='dc:title' itemprop='name'>Airbus A350-900 Flight test (F-WZNB) Air France</span>\" by  <a rel='dc:creator nofollow' property='cc:attributionName' href='https://www.flickr.com/photos/48518396@N08/51773701159/' target='_blank'><span itemprop='producer'>Olivier CABARET</span></a>.",
-                      "Shared and hosted by <span itemprop='publisher'>Flickr</span> under <a target=\"_blank\" rel=\"license cc:license nofollow\" href=\"https://creativecommons.org/licenses/by/2.0/\">CC BY</a>",
-                    ],
-                  },
-                },
-                "airline": {"name": "Air France", "iata": "AF", "icao": "AFR"},
-              },
-            ];
+                  try {
+                    final response = await http.get(
+                      Uri.parse(
+                        "https://aerodatabox.p.rapidapi.com/flights/icao24/${aircraft.hex}?withAircraftImage=True&withLocation=false",
+                      ),
+                      headers: {
+                        'x-rapidapi-host': 'aerodatabox.p.rapidapi.com',
+                        'x-rapidapi-key':
+                            '31cf3dbe29mshf37ec8a35a8c12fp1eaa6fjsnc302f250e6b6',
+                      },
+                    );
 
-            flight = Flight.fromJson(jsonList.last, position);
-          });
-        } else if (flightNumber == "CX250") {
-          setState(() {
-            List<dynamic> jsonList = [
-              {
-                "greatCircleDistance": {
-                  "meter": 9647548.25,
-                  "km": 9647.55,
-                  "mile": 5994.71,
-                  "nm": 5209.26,
-                  "feet": 31652061.19,
-                },
-                "departure": {
-                  "airport": {
-                    "icao": "EGLL",
-                    "iata": "LHR",
-                    "name": "London Heathrow",
-                    "shortName": "Heathrow",
-                    "municipalityName": "London",
-                    "location": {"lat": 51.4706, "lon": -0.461941},
-                    "countryCode": "GB",
-                    "timeZone": "Europe/London",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-08 17:50Z",
-                    "local": "2025-03-08 17:50+00:00",
-                  },
-                  "revisedTime": {
-                    "utc": "2025-03-08 18:06Z",
-                    "local": "2025-03-08 18:06+00:00",
-                  },
-                  "runwayTime": {
-                    "utc": "2025-03-08 18:06Z",
-                    "local": "2025-03-08 18:06+00:00",
-                  },
-                  "terminal": "3",
-                  "checkInDesk": "C",
-                  "runway": "09R",
-                  "quality": ["Basic", "Live"],
-                },
-                "arrival": {
-                  "airport": {
-                    "icao": "VHHH",
-                    "iata": "HKG",
-                    "name": "Hong Kong Chek Lap Kok",
-                    "shortName": "Chek Lap Kok",
-                    "municipalityName": "Hong Kong",
-                    "location": {"lat": 22.3089, "lon": 113.915},
-                    "countryCode": "HK",
-                    "timeZone": "Asia/Shanghai",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 06:35Z",
-                    "local": "2025-03-09 14:35+08:00",
-                  },
-                  "revisedTime": {
-                    "utc": "2025-03-09 06:30Z",
-                    "local": "2025-03-09 14:30+08:00",
-                  },
-                  "terminal": "1",
-                  "gate": "N28",
-                  "baggageBelt": "8",
-                  "quality": ["Basic", "Live"],
-                },
-                "lastUpdatedUtc": "2025-03-09 06:38Z",
-                "number": "CX 250",
-                "callSign": "CPA250",
-                "status": "Arrived",
-                "codeshareStatus": "IsOperator",
-                "isCargo": false,
-                "aircraft": {
-                  "reg": "B-KPF",
-                  "modeS": "780212",
-                  "model": "Boeing 777-300",
-                  "image": {
-                    "url":
-                        "https://farm1.staticflickr.com/431/32569404176_b7e412a189_z.jpg",
-                    "webUrl":
-                        "https://www.flickr.com/photos/20476255@N00/32569404176/",
-                    "author": "Riik@mctr",
-                    "title": "CX/CPA Cathay Pacific Boeing 777 B-KQZ",
-                    "description": "Manchester Airport (EGCC)",
-                    "license": "AttributionShareAlikeCC",
-                    "htmlAttributions": [
-                      "Original of \"<span property='dc:title' itemprop='name'>CX/CPA Cathay Pacific Boeing 777 B-KQZ</span>\" by <a rel='dc:creator nofollow' property='cc:attributionName' href='https://www.flickr.com/photos/20476255@N00/32569404176/' target='_blank'><span itemprop='producer'>Riik@mctr</span></a>.",
-                      "Shared and hosted by <span itemprop='publisher'>Flickr</span> under <a target=\"_blank\" rel=\"license cc:license nofollow\" href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC BY-SA</a>",
-                    ],
-                  },
-                },
-                "airline": {
-                  "name": "Cathay Pacific",
-                  "iata": "CX",
-                  "icao": "CPA",
-                },
-              },
-              {
-                "greatCircleDistance": {
-                  "meter": 9647548.25,
-                  "km": 9647.55,
-                  "mile": 5994.71,
-                  "nm": 5209.26,
-                  "feet": 31652061.19,
-                },
-                "departure": {
-                  "airport": {
-                    "icao": "EGLL",
-                    "iata": "LHR",
-                    "name": "London Heathrow",
-                    "shortName": "Heathrow",
-                    "municipalityName": "London",
-                    "location": {"lat": 51.4706, "lon": -0.461941},
-                    "countryCode": "GB",
-                    "timeZone": "Europe/London",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-09 17:50Z",
-                    "local": "2025-03-09 17:50+00:00",
-                  },
-                  "terminal": "3",
-                  "quality": ["Basic"],
-                },
-                "arrival": {
-                  "airport": {
-                    "icao": "VHHH",
-                    "iata": "HKG",
-                    "name": "Hong Kong Chek Lap Kok",
-                    "shortName": "Chek Lap Kok",
-                    "municipalityName": "Hong Kong",
-                    "location": {"lat": 22.3089, "lon": 113.915},
-                    "countryCode": "HK",
-                    "timeZone": "Asia/Shanghai",
-                  },
-                  "scheduledTime": {
-                    "utc": "2025-03-10 06:35Z",
-                    "local": "2025-03-10 14:35+08:00",
-                  },
-                  "revisedTime": {
-                    "utc": "2025-03-10 06:35Z",
-                    "local": "2025-03-10 14:35+08:00",
-                  },
-                  "predictedTime": {
-                    "utc": "2025-03-10 06:33Z",
-                    "local": "2025-03-10 14:33+08:00",
-                  },
-                  "terminal": "1",
-                  "quality": ["Basic", "Live"],
-                },
-                "lastUpdatedUtc": "2025-03-09 04:09Z",
-                "number": "CX 250",
-                "status": "Expected",
-                "codeshareStatus": "IsOperator",
-                "isCargo": false,
-                "aircraft": {
-                  "model": "Airbus A350-900",
-                  "image": {
-                    "url":
-                        "https://farm5.staticflickr.com/4470/37237901474_dd2924d4f0_z.jpg",
-                    "webUrl":
-                        "https://www.flickr.com/photos/20476255@N00/37237901474/",
-                    "author": "Riik@mctr",
-                    "title": "CX/CPA Cathay Pacific Airbus A350 B-LRS",
-                    "description": "Manchester Airport (EGCC)",
-                    "license": "AttributionShareAlikeCC",
-                    "htmlAttributions": [
-                      "Original of \"<span property='dc:title' itemprop='name'>CX/CPA Cathay Pacific Airbus A350 B-LRS</span>\" by <a rel='dc:creator nofollow' property='cc:attributionName' href='https://www.flickr.com/photos/20476255@N00/37237901474/' target='_blank'><span itemprop='producer'>Riik@mctr</span></a>.",
-                      "Shared and hosted by <span itemprop='publisher'>Flickr</span> under <a target=\"_blank\" rel=\"license cc:license nofollow\" href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC BY-SA</a>",
-                    ],
-                  },
-                },
-                "airline": {
-                  "name": "Cathay Pacific",
-                  "iata": "CX",
-                  "icao": "CPA",
-                },
-              },
-            ];
+                    if (response.statusCode == 200) {
+                      print(response.body);
+                      Flight currentFlight = Flight.fromJson(
+                        jsonDecode(response.body)[0],
+                      );
 
-            flight = Flight.fromJson(jsonList.last, position);
-          });
-        }
+                      setState(() {
+                        print(currentFlight.aircraft.image);
+                        flight = currentFlight;
+                      });
+                    } else {
+                      print(response.statusCode);
+                      print(response.body);
+                    }
+                  } catch (e) {
+                    print(e);
+                  }
+                },
+                child: Container(width: 1, height: 1, color: Colors.yellow),
+              ),
+            ),
+          ),
+        );
+      } else {
+        print("quoi");
       }
-    } catch (e) {
-      print(e);
     }
 
-    // String url =
-    //     "https://aerodatabox.p.rapidapi.com/flights/number/$flightNumber?withAircraftImage=true&withLocation=true";
-    // const Map<String, String> headers = {
-    //   'x-rapidapi-host': 'aerodatabox.p.rapidapi.com',
-    //   'x-rapidapi-key': '',
-    // };
-
-    // try {
-    //   final response = await http.get(Uri.parse(url), headers: headers);
-
-    //   if (response.statusCode == 200) {
-    //     Clipboard.setData(ClipboardData(text: response.body)).then((_) {
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         SnackBar(content: Text("Email address copied to clipboard")),
-    //       );
-    //     });
-    //   } else {
-    //     print("Request failed with status: ${response.statusCode}");
-    //     print("Response body: ${response.body}");
-    //   }
-    // } catch (e) {
-    //   print("Error: $e");
-    // }
+    setState(() {
+      _markers = newMarkers;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Column(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: LatLng(52.267559, 20.968847),
+                initialZoom: 12,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                ),
+                MarkerLayer(markers: _markers),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 70,
+            left: 20,
+            right: 20,
+            child: SizedBox(
+              height: 50,
+              child: Row(
+                spacing: 10,
                 children: [
-                  SizedBox(height: 150),
-                  GestureDetector(
-                    onTap: () {
-                      retrieveFlightInfo("AF2");
-                    },
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      color: Colors.amber,
-                      child: Text("CDG-JFK"),
+                  FlightTrackerSearchBar(),
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 25,
+                    child: Icon(
+                      Icons.person_outline_rounded,
+                      color: Colors.black,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      retrieveFlightInfo("AF1247");
-                    },
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      color: Colors.amber,
-                      child: Text("WAW-CDG"),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      retrieveFlightInfo("CX250");
-                    },
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      color: Colors.amber,
-                      child: Text("LHR-HKG"),
-                    ),
-                  ),
-                  Text(data),
                 ],
               ),
             ),
-            Positioned(
-              top: 20,
-              left: 20,
-              right: 20,
-              child: Container(
-                height: 50,
-                child: Row(
-                  spacing: 10,
-                  children: [
-                    FlightTrackerSearchBar(),
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 25,
-                      child: Icon(
-                        Icons.person_outline_rounded,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          ),
 
-            if (flight != null)
-              DraggableScrollSheet(
-                page: InfoPage(flight: flight!),
-                previewContent: _buildPreviewContent(),
-                handleColor: Colors.grey.withAlpha(128),
-                minHeight: 250,
-                backgroundColor: Colors.white,
-              ),
-          ],
-        ),
+          if (flight != null)
+            DraggableScrollSheet(
+              page: InfoPage(flight: flight!),
+              previewContent: _buildPreviewContent(),
+              handleColor: Colors.grey.withAlpha(128),
+              minHeight: 250,
+              backgroundColor: Colors.white,
+            ),
+        ],
       ),
     );
   }

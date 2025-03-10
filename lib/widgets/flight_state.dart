@@ -67,7 +67,7 @@ class _FlightStateState extends State<FlightState> {
                 FlightTrackerHero(
                   tag: 'flight-altitude-speed',
                   child: Text(
-                    "${widget.flight.position.gspeed}KTS - ${widget.flight.position.alt}FT",
+                    "KTS - FT",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),

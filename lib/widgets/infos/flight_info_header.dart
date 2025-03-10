@@ -75,7 +75,7 @@ class FlightInfoHeader extends StatelessWidget {
                 FlightTrackerHero(
                   tag: 'flight-altitude-speed',
                   child: Text(
-                    "${flight.position.gspeed}KTS - ${flight.position.alt}FT",
+                    "KTS - FT",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
